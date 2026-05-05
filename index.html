@@ -1,0 +1,3100 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Můj jídelníček · macro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS — Notion/Linear minimal × greens × data-nerd
+   ============================================================ */
+:root {
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-2: #f5f4f0;
+  --surface-3: #ebeae5;
+  --border: #e7e5df;
+  --border-strong: #d8d6cf;
+
+  --ink: #15140f;
+  --ink-2: #45433d;
+  --ink-3: #7a786f;
+  --ink-4: #a8a69d;
+
+  --green: oklch(0.62 0.14 145);
+  --green-ink: oklch(0.42 0.10 145);
+  --green-soft: oklch(0.94 0.04 145);
+  --green-line: oklch(0.86 0.06 145);
+
+  --protein: oklch(0.62 0.14 145);
+  --carbs:   oklch(0.72 0.10 90);
+  --fat:     oklch(0.66 0.10 45);
+  --warn:    oklch(0.62 0.16 30);
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 0 rgba(20,20,15,0.04);
+  --shadow-md: 0 1px 2px rgba(20,20,15,0.04), 0 4px 16px rgba(20,20,15,0.04);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.num { font-family: var(--font-mono); font-feature-settings: "tnum"; letter-spacing: -0.02em; }
+.mono { font-family: var(--font-mono); }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea { font-family: inherit; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============ APP LAYOUT ============ */
+.app { display: flex; min-height: 100vh; }
+
+aside {
+  width: 230px;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ============ SIDEBAR ============ */
+.brand { display: flex; align-items: center; gap: 9px; padding: 6px 8px 14px; }
+
+.brand-mark {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--ink); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 12px;
+  font-family: var(--font-mono); letter-spacing: -0.05em;
+}
+
+.brand-name { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+.brand-chev { margin-left: auto; color: var(--ink-3); }
+
+.search-bar {
+  margin: 0 8px 10px;
+  height: 30px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 9px;
+  color: var(--ink-3); font-size: 12px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.search-bar:hover { border-color: var(--border-strong); }
+
+.search-shortcut {
+  margin-left: auto;
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 1px 4px; background: var(--surface-3);
+  border-radius: 3px; color: var(--ink-3);
+}
+
+nav.primary { padding: 4px 0; display: flex; flex-direction: column; gap: 1px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid transparent;
+  width: 100%; text-align: left; cursor: pointer;
+  transition: background 0.1s;
+}
+.nav-item:hover { background: rgba(0,0,0,0.02); }
+.nav-item.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border);
+}
+.nav-item .nav-icon { color: var(--ink-3); flex-shrink: 0; }
+.nav-item.active .nav-icon { color: var(--ink); }
+
+.nav-section-label {
+  font-size: 10px; font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 18px 10px 8px;
+}
+
+.nav-collection {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 5px;
+  font-size: 12px; color: var(--ink-2);
+  width: 100%; text-align: left; cursor: pointer;
+  transition: background 0.1s;
+}
+.nav-collection:hover { background: rgba(0,0,0,0.02); }
+.nav-collection.active { background: var(--surface); color: var(--ink); font-weight: 500; }
+
+.user-chip {
+  margin-top: auto;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 9px;
+}
+
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 99px;
+  background: var(--green-soft);
+  color: var(--green-ink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-info-name { font-size: 12px; font-weight: 500; }
+.user-info-meta { font-size: 10px; color: var(--ink-3); font-family: var(--font-mono); }
+
+/* ============ TOP BAR ============ */
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 5;
+  gap: 16px;
+}
+
+.breadcrumb {
+  font-size: 11px; color: var(--ink-3);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.topbar h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.topbar-subtitle { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.btn {
+  height: 32px; padding: 0 11px;
+  border-radius: 7px;
+  font-size: 12.5px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-secondary { background: var(--surface); color: var(--ink-2); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--surface-2); }
+.btn-primary { background: var(--ink); color: var(--bg); padding: 0 12px; }
+.btn-primary:hover { background: #2a2722; }
+
+/* ============ PAGE CONTENT ============ */
+.page-content { flex: 1; overflow-y: auto; padding: 20px 28px 32px; }
+
+section { display: none; }
+section.active { display: block; }
+
+/* ============ CARDS ============ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.card-title { font-size: 13px; font-weight: 600; }
+.card-sub { font-size: 11px; color: var(--ink-3); }
+
+/* ============ CHIPS / TAGS / KEY-VAL ============ */
+.chip {
+  height: 26px; padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.chip:hover { border-color: var(--border-strong); }
+.chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip-dot { width: 6px; height: 6px; border-radius: 99px; }
+
+.tag {
+  font-size: 10px; color: var(--ink-3);
+  background: var(--surface-2);
+  padding: 2px 6px; border-radius: 3px;
+  font-weight: 500;
+}
+
+.key-val { display: flex; flex-direction: column; gap: 2px; }
+.key-val-k {
+  font-size: 10px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 500;
+}
+.key-val-v {
+  font-size: 18px; font-weight: 500;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em;
+  line-height: 1.1; color: var(--ink);
+}
+.key-val-sub { font-size: 11px; color: var(--ink-3); }
+
+/* ============ MACRO BAR ============ */
+.bar { height: 4px; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+
+.macro-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 5px;
+}
+.macro-label {
+  font-size: 11px; color: var(--ink-2); font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+}
+.macro-dot { width: 6px; height: 6px; border-radius: 99px; }
+
+/* ============ HERO CARD ============ */
+.hero-card {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  align-items: center;
+  padding: 22px;
+}
+
+.macro-ring-wrap {
+  position: relative;
+  width: 180px; height: 180px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.macro-ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+
+.macro-ring-kcal {
+  font-size: 38px; font-weight: 500;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.03em; line-height: 1;
+  color: var(--ink);
+}
+
+.macro-ring-label {
+  font-size: 10px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-top: 4px; font-weight: 500;
+}
+
+/* ============ SEGMENTED ============ */
+.segmented {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+}
+
+.segmented button {
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 12px; font-weight: 500;
+  color: var(--ink-3);
+  transition: all 0.15s;
+}
+.segmented button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============ DAY CHIPS ============ */
+.day-chips {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+  gap: 1px;
+}
+
+.day-chip {
+  position: relative;
+  padding: 6px 11px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: 0;
+  min-width: 36px;
+  transition: all 0.15s;
+}
+
+.day-chip:hover { color: var(--ink-2); }
+
+.day-chip.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.day-chip.today::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 99px;
+  background: var(--green);
+}
+
+.day-type-suffix {
+  color: var(--ink-3);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ============ MEAL ROW ============ */
+.meal-list { }
+
+.meal-row {
+  display: grid;
+  grid-template-columns: 80px 80px 1fr auto auto 16px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+  position: relative;
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-row.clickable { cursor: pointer; }
+.meal-row.clickable:hover { background: var(--surface-2); }
+.meal-row.clickable:hover .meal-row-chev { color: var(--ink-2); }
+.meal-row.workout {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  cursor: default;
+}
+
+.meal-row-chev {
+  color: var(--ink-4);
+  transition: color 0.15s;
+}
+
+.meal-row-time {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 12px; color: var(--ink-3);
+}
+
+.meal-row-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.meal-row-desc { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+.meal-row-macros {
+  display: flex; gap: 14px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.meal-row-macros span.kcal { color: var(--ink); font-weight: 500; }
+
+.workout-pill {
+  background: var(--green); color: white;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 99px;
+}
+
+.main-pill {
+  font-size: 10px; color: var(--green-ink);
+  background: var(--green-soft);
+  padding: 1px 6px; border-radius: 99px;
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; margin-left: 4px;
+}
+
+/* ============ DASHBOARD GRID ============ */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+.col-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.col-right { display: flex; flex-direction: column; gap: 14px; }
+
+.widget {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.widget-header {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 6px;
+}
+
+.widget-title { font-size: 12px; font-weight: 600; }
+.widget-sub { font-size: 10px; color: var(--ink-3); }
+
+.widget-stat-big {
+  font-size: 28px; font-weight: 500;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.02em; line-height: 1.1;
+  color: var(--ink);
+}
+
+.widget-stat-unit {
+  font-size: 12px; color: var(--ink-3);
+  font-weight: 400; margin-left: 3px;
+  font-family: var(--font-sans);
+}
+
+/* ============ KPI ============ */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.kpi-label {
+  font-size: 10px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 500; margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 24px; font-weight: 500;
+  letter-spacing: -0.02em; line-height: 1;
+  color: var(--ink);
+}
+
+.kpi-unit {
+  font-family: var(--font-sans);
+  font-size: 11px; color: var(--ink-3);
+  font-weight: 400; margin-left: 4px;
+}
+
+.kpi-meta { font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+.kpi-meta.positive { color: var(--green-ink); }
+
+/* ============ RECIPES GRID ============ */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.recipe-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.recipe-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.recipe-thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  margin: 8px 8px 0;
+}
+
+.recipe-thumb-label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.04em;
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 3px; font-weight: 500;
+}
+
+.recipe-body {
+  padding: 10px 12px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  flex: 1;
+}
+
+.recipe-title {
+  font-size: 13px; font-weight: 600;
+  line-height: 1.3; letter-spacing: -0.005em;
+}
+
+.recipe-meta {
+  font-size: 11px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+
+.recipe-stats {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; gap: 8px;
+}
+
+.recipe-kcal-block { display: flex; flex-direction: column; gap: 1px; }
+
+.recipe-kcal-label {
+  font-size: 9px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+.recipe-kcal-value {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 18px; font-weight: 500;
+  letter-spacing: -0.02em; line-height: 1.1;
+}
+
+.recipe-kcal-unit {
+  font-family: var(--font-sans);
+  font-size: 10px; color: var(--ink-3);
+  margin-left: 2px; font-weight: 400;
+}
+
+.recipe-macros {
+  display: flex; gap: 7px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+
+.filter-row {
+  display: flex; gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap; align-items: center;
+}
+
+.filter-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 0 6px;
+  align-self: stretch;
+}
+
+/* ============ MODAL ============ */
+.modal-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(20,20,15,0.4);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  align-items: flex-start; justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  max-width: 720px; width: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-3);
+  background: var(--surface);
+}
+.modal-close:hover { background: var(--surface-2); color: var(--ink); }
+
+.modal-body { padding: 18px 22px 22px; }
+
+.modal-meta-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 14px 22px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.modal-ingredients { list-style: none; display: flex; flex-direction: column; }
+
+.modal-ingredients li {
+  padding: 9px 0;
+  font-size: 13px; color: var(--ink-2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.modal-ingredients li:last-child { border-bottom: none; }
+
+.modal-ing-bullet {
+  width: 4px; height: 4px;
+  background: var(--ink-4);
+  border-radius: 99px;
+  margin-top: 8px; flex-shrink: 0;
+}
+
+.modal-note {
+  margin-top: 18px;
+  padding: 14px;
+  background: var(--green-soft);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--green);
+  font-size: 12.5px; color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.modal-note strong { color: var(--green-ink); font-weight: 600; }
+
+/* ============ WEEK TABLE ============ */
+.week-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.week-table th {
+  padding: 11px 12px;
+  text-align: left;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.week-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--ink-2);
+}
+
+.week-table tr:last-child td { border-bottom: none; }
+
+.week-table td.day-cell {
+  font-weight: 600;
+  color: var(--ink);
+  width: 60px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+
+.week-table tr.training td { background: var(--green-soft); }
+.week-table tr.training td.day-cell { color: var(--green-ink); }
+
+.week-table .prep-cell {
+  font-style: italic;
+  color: var(--green-ink);
+  font-weight: 500;
+}
+
+/* ============ CHECKLIST ============ */
+.checklist { display: flex; flex-direction: column; }
+
+.check-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none;
+  transition: background 0.1s;
+}
+.check-row:last-child { border-bottom: none; }
+.check-row:hover { background: var(--surface-2); }
+
+.check-row.checked .check-text strong { text-decoration: line-through; color: var(--ink-3); }
+.check-row.checked .check-text small { color: var(--ink-4); }
+
+.check-box {
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+  transition: all 0.15s;
+}
+
+.check-row.checked .check-box {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.check-row.checked .check-box::after {
+  content: '';
+  width: 10px; height: 6px;
+  border-left: 1.6px solid white;
+  border-bottom: 1.6px solid white;
+  transform: rotate(-45deg) translate(2px, -1px);
+}
+
+.check-text { flex: 1; font-size: 13px; }
+.check-text strong { color: var(--ink); font-weight: 500; display: block; }
+.check-text small {
+  display: block; color: var(--ink-3);
+  font-size: 11.5px; margin-top: 2px; line-height: 1.45;
+}
+
+/* Prep row variant — has detail button */
+.prep-row .check-text { cursor: pointer; }
+.prep-row .check-text:hover strong { color: var(--green-ink); }
+
+.prep-detail-btn {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-3);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: -2px;
+  transition: all 0.15s;
+}
+.prep-detail-btn:hover {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+  color: var(--green-ink);
+}
+
+/* Prep recipe steps (in modal) */
+.prep-steps {
+  list-style: none;
+  display: flex; flex-direction: column;
+  gap: 0;
+}
+
+.prep-steps li {
+  display: flex; gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.prep-steps li:first-child { border-top: none; padding-top: 4px; }
+
+.prep-step-num {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--green-soft);
+  color: var(--green-ink);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+
+.prep-step-text { flex: 1; min-width: 0; }
+
+/* ============ SHOPPING ============ */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.shop-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.shop-section-header {
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.shop-section-count {
+  font-size: 10px; color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum"; font-weight: 500;
+}
+
+.shop-list { list-style: none; }
+
+.shop-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 14px;
+  font-size: 12px; color: var(--ink-2);
+  border-top: 1px solid var(--border);
+  cursor: pointer; user-select: none;
+  transition: background 0.1s;
+}
+.shop-list li:first-child { border-top: none; }
+.shop-list li:hover { background: var(--surface-2); }
+.shop-list li.checked { color: var(--ink-4); text-decoration: line-through; }
+
+.shop-checkbox {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+  transition: all 0.15s;
+}
+
+.shop-list li.checked .shop-checkbox {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.shop-list li.checked .shop-checkbox::after {
+  content: '';
+  width: 7px; height: 4px;
+  border-left: 1.4px solid white;
+  border-bottom: 1.4px solid white;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+/* ============ RULES ============ */
+.rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.rules-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.rules-card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600;
+}
+
+.rules-card.avoid .rules-card-header { color: var(--warn); }
+.rules-card.prefer .rules-card-header { color: var(--green-ink); }
+
+.rules-card-header .dot { width: 8px; height: 8px; border-radius: 99px; }
+.rules-card.avoid .rules-card-header .dot { background: var(--warn); }
+.rules-card.prefer .rules-card-header .dot { background: var(--green); }
+
+.rules-list { list-style: none; }
+
+.rules-list li {
+  padding: 10px 16px;
+  font-size: 12.5px; color: var(--ink-2);
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+.rules-list li:first-child { border-top: none; }
+.rules-list li strong { color: var(--ink); font-weight: 600; margin-right: 4px; }
+
+/* ============ HABITS ============ */
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.habit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+
+.habit-num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: 13px; font-weight: 600;
+  color: var(--green-ink);
+  background: var(--green-soft);
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.habit-content { flex: 1; min-width: 0; }
+.habit-content strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.habit-content p { font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
+
+/* ============ INFO/WARN BOXES ============ */
+.info-box {
+  background: var(--green-soft);
+  border: 1px solid var(--green-line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+
+.info-box-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--green-ink);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.info-box-content {
+  font-size: 12.5px; color: var(--ink-2); line-height: 1.55;
+}
+.info-box-content + .info-box-content { margin-top: 6px; }
+
+.warn-box {
+  background: oklch(0.96 0.04 30);
+  border: 1px solid oklch(0.85 0.06 30);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+
+.warn-box-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--warn);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ============ FLAGS ============ */
+.flags-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.flag-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.flag-card.green .flag-header { background: var(--green-soft); color: var(--green-ink); }
+.flag-card.red .flag-header { background: oklch(0.96 0.04 30); color: var(--warn); }
+
+.flag-header {
+  padding: 10px 14px;
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.flag-list { list-style: none; }
+
+.flag-list li {
+  padding: 9px 14px;
+  font-size: 12px; color: var(--ink-2);
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+.flag-list li:first-child { border-top: none; }
+
+/* ============ SECTION TITLE ============ */
+.section-title {
+  font-size: 14px; font-weight: 600;
+  margin: 24px 0 12px;
+  letter-spacing: -0.01em;
+}
+.section-title:first-child { margin-top: 0; }
+
+.section-sub {
+  font-size: 12px; color: var(--ink-3);
+  margin-top: -8px; margin-bottom: 12px;
+}
+
+/* ============ MOBILE ============ */
+.mobile-toggle { display: none; }
+
+@media (max-width: 900px) {
+  aside {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  aside.open { transform: translateX(0); }
+
+  .mobile-toggle {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink-2);
+    margin-right: 8px;
+  }
+
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 8px;
+  }
+
+  .topbar h1 { font-size: 18px; }
+  .topbar .topbar-subtitle { display: none; }
+  .topbar-actions { gap: 4px; flex-shrink: 1; }
+  .topbar-actions .btn { padding: 0 8px; height: 30px; font-size: 12px; }
+  .segmented button { padding: 5px 8px; font-size: 11px; }
+
+  .page-content { padding: 14px 16px 24px; }
+
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .hero-card { grid-template-columns: 1fr; gap: 18px; padding: 18px; }
+  .macro-ring-wrap { margin: 0 auto; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .rules-grid, .flags-grid, .shop-grid { grid-template-columns: 1fr; }
+  .meal-row {
+    grid-template-columns: 60px 1fr 16px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .meal-row > div:nth-child(2) { display: none; }
+  .meal-row-macros { grid-column: 1 / -1; padding-left: 68px; }
+  .recipes-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-meta-row { grid-template-columns: repeat(2, 1fr); }
+  .week-table { font-size: 11px; }
+  .week-table td, .week-table th { padding: 8px; }
+
+  .mobile-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 40;
+  }
+  .mobile-overlay.open { display: block; }
+}
+
+@media (max-width: 600px) {
+  .recipes-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">m.</div>
+    <div class="brand-name">macro</div>
+    <span class="brand-chev">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </span>
+  </div>
+
+  <div class="search-bar">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    Hledat jídlo nebo recept…
+    <span class="search-shortcut">⌘K</span>
+  </div>
+
+  <nav class="primary">
+    <button class="nav-item active" data-target="today">
+      <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+      Dnešek
+    </button>
+    <button class="nav-item" data-target="recipes">
+      <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M6 19h13"/></svg>
+      Recepty
+    </button>
+    <button class="nav-item" data-target="week">
+      <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Týden
+    </button>
+    <button class="nav-item" data-target="progress">
+      <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+      Pokrok
+    </button>
+  </nav>
+
+  <div class="nav-section-label">Collections</div>
+  <button class="nav-collection" data-target="prep">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    Příprava na týden
+  </button>
+  <button class="nav-collection" data-target="shopping">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    Nákupní seznam
+  </button>
+  <button class="nav-collection" data-target="rules">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    Anti-nafouknutí
+  </button>
+  <button class="nav-collection" data-target="cardio">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    Cardio plán
+  </button>
+  <button class="nav-collection" data-target="rescue">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+    Záchranný den
+  </button>
+
+  <div class="user-chip">
+    <div class="user-avatar">JM</div>
+    <div class="user-info">
+      <div class="user-info-name">My profile</div>
+      <div class="user-info-meta">2,920 kcal · lean bulk</div>
+    </div>
+  </div>
+</aside>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+<!-- ============ TODAY ============ -->
+<section id="today" class="active">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap: 0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1 id="todayTitle">Středa <span class="day-type-suffix">· Tréninkový den</span></h1>
+        <div class="topbar-subtitle">Lean bulk · klikni na jídlo a podíváš se na recept</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="day-chips" id="dayChips">
+        <button class="day-chip" data-day="po">Po</button>
+        <button class="day-chip" data-day="ut">Út</button>
+        <button class="day-chip" data-day="st">St</button>
+        <button class="day-chip" data-day="ct">Čt</button>
+        <button class="day-chip" data-day="pa">Pá</button>
+        <button class="day-chip" data-day="so">So</button>
+        <button class="day-chip" data-day="ne">Ne</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="dashboard-grid">
+      <div class="col-left">
+
+        <div class="card hero-card">
+          <div class="macro-ring-wrap" id="macroRingWrap"></div>
+          <div style="display:flex; flex-direction:column; gap:14px; min-width:0;">
+            <div>
+              <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.08em; font-weight:500;">Cílový příjem</div>
+              <div class="num" style="font-size:32px; font-weight:500; letter-spacing:-0.02em; line-height:1.1; margin-top: 2px;">
+                <span id="dayTargetKcal">2 650</span><span style="font-size:13px; color:var(--ink-3); font-weight:400; margin-left:4px; font-family:var(--font-sans);">kcal</span>
+              </div>
+              <div style="font-size:11px; color:var(--ink-3); margin-top: 4px;">
+                TDEE 2 700 · <span id="dayDeficit">+350 kcal nad TDEE</span>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+              <div>
+                <div class="macro-row">
+                  <span class="macro-label"><span class="macro-dot" style="background:var(--protein)"></span>Protein</span>
+                  <span class="num" style="font-size:11px; color:var(--ink-3);"><span id="pVal">180</span>g</span>
+                </div>
+                <div class="bar"><div class="bar-fill" style="width:100%; background:var(--protein);"></div></div>
+              </div>
+              <div>
+                <div class="macro-row">
+                  <span class="macro-label"><span class="macro-dot" style="background:var(--carbs)"></span>Sacharidy</span>
+                  <span class="num" style="font-size:11px; color:var(--ink-3);"><span id="cVal">290</span>g</span>
+                </div>
+                <div class="bar"><div class="bar-fill" style="width:100%; background:var(--carbs);"></div></div>
+              </div>
+              <div>
+                <div class="macro-row">
+                  <span class="macro-label"><span class="macro-dot" style="background:var(--fat)"></span>Tuk</span>
+                  <span class="num" style="font-size:11px; color:var(--ink-3);"><span id="fVal">75</span>g</span>
+                </div>
+                <div class="bar"><div class="bar-fill" style="width:100%; background:var(--fat);"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Plán dne</div>
+            <div style="display:flex; gap:6px;" id="mealFilterChips">
+              <button class="chip active" data-meal-filter="all">Vše</button>
+              <button class="chip" data-meal-filter="main">Hlavní jídla</button>
+              <button class="chip" data-meal-filter="snacks">Svačiny</button>
+            </div>
+          </div>
+          <div class="meal-list" id="mealList"></div>
+        </div>
+
+      </div>
+
+      <div class="col-right">
+
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title">Aktuální složení těla</div>
+            <div class="widget-sub">poslední vážení</div>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+            <div class="widget-stat-big">80,0<span class="widget-stat-unit">kg</span></div>
+            <div class="num" style="font-size:11px; color:var(--green-ink);">−2,3 kg vs. start</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
+            <div>
+              <div style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.08em; font-weight:500; margin-bottom:3px;">Fáze</div>
+              <div class="num" style="font-size:14px; font-weight:500; color:var(--green-ink);">Lean bulk</div>
+            </div>
+            <div>
+              <div style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.08em; font-weight:500; margin-bottom:3px;">TDEE</div>
+              <div class="num" style="font-size:14px; font-weight:500;">2 700<span style="font-size:10px; color:var(--ink-3); margin-left:2px; font-family:var(--font-sans); font-weight:400;">kcal</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title">Cíl · Lean bulk</div>
+            <div class="widget-sub">+2–3 kg svalů za 3–6 měs.</div>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+            <div class="widget-stat-big">+0,2<span class="widget-stat-unit">kg/týd</span></div>
+            <div class="num" style="font-size:11px; color:var(--green-ink); display:flex; align-items:center; gap:2px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              pomalu
+            </div>
+          </div>
+          <div style="font-size:11px; color:var(--ink-3); margin-top: 10px; line-height: 1.5;">
+            Rychlejší = víc tuku. Pomalu = víc svalu, méně tuku k schoditi.
+          </div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title">Týdenní průměr</div>
+            <div class="widget-sub">cíl 2 960 kcal/den</div>
+          </div>
+          <div id="weekMiniBars" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
+        </div>
+
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title">Voda</div>
+            <div class="widget-sub">cíl 2,5 l/den</div>
+          </div>
+          <div style="display:flex; gap:4px; margin-top:6px;">
+            <div style="flex:1; height:24px; border:1px solid var(--green); background:var(--green-soft); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--green); background:var(--green-soft); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--green); background:var(--green-soft); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--green); background:var(--green-soft); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--green); background:var(--green-soft); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--border); background:var(--surface); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--border); background:var(--surface); border-radius:4px;"></div>
+            <div style="flex:1; height:24px; border:1px solid var(--border); background:var(--surface); border-radius:4px;"></div>
+          </div>
+          <div class="num" style="font-size:10px; color:var(--ink-3); margin-top:6px;">5 / 8 sklenic</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RECIPES ============ -->
+<section id="recipes">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1>Recepty</h1>
+        <div class="topbar-subtitle"><span id="recipeCount">35</span> jídel · low-FODMAP, gut-friendly</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="filter-row" id="recipeFilters"></div>
+    <div class="recipes-grid" id="recipesGrid"></div>
+  </div>
+</section>
+
+<!-- ============ WEEK ============ -->
+<section id="week">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1>Týden</h1>
+        <div class="topbar-subtitle">3 silové · 1–2 cardio · 1 prep day</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <div class="kpi-row" style="margin-bottom:18px;">
+      <div class="kpi">
+        <div class="kpi-label">Dní v týdnu</div>
+        <div><span class="kpi-value">7</span><span class="kpi-unit">dnů</span></div>
+        <div class="kpi-meta">3 trénink + 4 odpočinek</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Týdenní kcal</div>
+        <div><span class="kpi-value">20 710</span></div>
+        <div class="kpi-meta">průměr 2 960 / den</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Týdenní protein</div>
+        <div><span class="kpi-value">1 365</span><span class="kpi-unit">g</span></div>
+        <div class="kpi-meta">195 g / den</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Cardio</div>
+        <div><span class="kpi-value">30–60</span><span class="kpi-unit">min</span></div>
+        <div class="kpi-meta">jen pro zdraví srdce</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Surplus</div>
+        <div><span class="kpi-value">+260</span><span class="kpi-unit">kcal/den</span></div>
+        <div class="kpi-meta positive">~0,2 kg/týden</div>
+      </div>
+    </div>
+
+    <table class="week-table">
+      <thead>
+        <tr>
+          <th>Den</th>
+          <th>Snídaně</th>
+          <th>Dop. svačina</th>
+          <th>Oběd</th>
+          <th>Odp. svačina</th>
+          <th>Večeře</th>
+          <th>Aktivita</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="day-cell">Po</td>
+          <td>Overnight oats</td>
+          <td>Vejce + chleb.</td>
+          <td>Kuřecí + rýže</td>
+          <td>Tvaroh + jahody</td>
+          <td>Hovězí + brambory</td>
+          <td>Odpočinek</td>
+        </tr>
+        <tr class="training">
+          <td class="day-cell">Út</td>
+          <td>Overnight oats</td>
+          <td>Kuřecí bowl</td>
+          <td>Hovězí + rýže</td>
+          <td>Shake + banán</td>
+          <td>Kuře + rýže</td>
+          <td style="color:var(--green-ink); font-weight:500;">Silový 20:00</td>
+        </tr>
+        <tr>
+          <td class="day-cell">St</td>
+          <td>Overnight oats</td>
+          <td>Tuňák</td>
+          <td>Losos + quinoa</td>
+          <td>Skyr + kiwi</td>
+          <td>Hovězí + brambory</td>
+          <td>Cardio 25 min</td>
+        </tr>
+        <tr class="training">
+          <td class="day-cell">Čt</td>
+          <td>Vaječné muffiny</td>
+          <td>Vejce + chleb.</td>
+          <td>Kuřecí + rýže</td>
+          <td>Shake + banán</td>
+          <td>Losos + batáty</td>
+          <td style="color:var(--green-ink); font-weight:500;">Silový 20:00</td>
+        </tr>
+        <tr>
+          <td class="day-cell">Pá</td>
+          <td>Vaječné muffiny</td>
+          <td>Kuřecí bowl</td>
+          <td>Krůtí + batáty</td>
+          <td>Tvaroh + ovoce</td>
+          <td>Krůtí + brambory</td>
+          <td>Odpočinek</td>
+        </tr>
+        <tr>
+          <td class="day-cell">So</td>
+          <td>Skyr bowl</td>
+          <td colspan="4" class="prep-cell">Prep day — vaříš pro celý týden (~1,5–2 h)</td>
+          <td>Cardio (volit. 25 min)</td>
+        </tr>
+        <tr class="training">
+          <td class="day-cell">Ne</td>
+          <td>Overnight oats</td>
+          <td>Snack box</td>
+          <td>Kuřecí + rýže</td>
+          <td>Shake + banán</td>
+          <td>Kuře + rýže</td>
+          <td style="color:var(--green-ink); font-weight:500;">Silový 20:00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="info-box">
+      <div class="info-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Pravidlo flexibility
+      </div>
+      <div class="info-box-content">
+        Tohle je vzor, ne dogma. Pokud máš v sobotu narozeniny nebo v pátek pivo s kámoši — v pohodě. Důležitý je <strong>týdenní průměr</strong>, ne dokonalost každého dne.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROGRESS ============ -->
+<section id="progress">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1>Pokrok</h1>
+        <div class="topbar-subtitle">Co a jak měřit · realistická očekávání</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <div class="kpi-row" style="margin-bottom:18px; grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Týdně měř</div>
+        <div><span class="kpi-value" style="font-size:18px;">3</span><span class="kpi-unit">věci</span></div>
+        <div class="kpi-meta">váha + pas + síla</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Cílové tempo</div>
+        <div><span class="kpi-value" style="font-size:18px;">+0,2</span><span class="kpi-unit">kg/týd</span></div>
+        <div class="kpi-meta">rychleji = ukládáš tuk</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Pas — drž</div>
+        <div><span class="kpi-value" style="font-size:18px;">±0–1</span><span class="kpi-unit">cm</span></div>
+        <div class="kpi-meta">malý nárůst je OK</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Cíl bulku</div>
+        <div><span class="kpi-value" style="font-size:18px;">+2–3</span><span class="kpi-unit">kg</span></div>
+        <div class="kpi-meta">za 3–6 měsíců</div>
+      </div>
+    </div>
+
+    <div class="section-title">Týdenní měření</div>
+    <div class="section-sub">Stejný den, ráno, po toaletě, nalačno.</div>
+    <div class="habits-grid">
+      <div class="habit-card">
+        <div class="habit-num">a</div>
+        <div class="habit-content">
+          <strong>Váha</strong>
+          <p>Sleduj 7denní průměr. Při bulku má růst pomalu — 0,2 kg/týden je sweet spot.</p>
+        </div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">b</div>
+        <div class="habit-content">
+          <strong>Obvod pasu v pupku</strong>
+          <p>Krejčovský metr. Pokud roste rychleji než váha, ukládáš spíš tuk než sval.</p>
+        </div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">c</div>
+        <div class="habit-content">
+          <strong>Síla v gymu (PR)</strong>
+          <p>Nejdůležitější ukazatel pro bulk. Pokud váha roste a síla taky → nabíráš sval.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flags-grid">
+      <div class="flag-card green">
+        <div class="flag-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg>
+          Funguje to
+        </div>
+        <ul class="flag-list">
+          <li>Váha +0,15 až +0,3 kg/týden</li>
+          <li>Síla v gymu progresivně roste (PR každý týden/dva)</li>
+          <li>Pas roste max ±1 cm za 4 týdny</li>
+          <li>Plnější ramena, hrudník, paže</li>
+          <li>Dobrá energie, dobrý spánek, dobrá chuť</li>
+        </ul>
+      </div>
+      <div class="flag-card red">
+        <div class="flag-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Uprav (červené vlajky)
+        </div>
+        <ul class="flag-list">
+          <li>Váha roste rychleji než 0,4 kg/týd → <strong>jíš moc</strong>, ber 200 kcal pryč</li>
+          <li>Pas +2 cm za 4 týdny → ubrat 200 kcal z netr. dnů</li>
+          <li>3 týdny váha neroste → <strong>jez víc</strong>, přidej 150 kcal</li>
+          <li>Síla stagnuje → víc spánku, víc jídla v tréninkové dny</li>
+          <li>Únava, nafouklost vrátila → vrátit anti-bloat pravidla</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="warn-box" style="margin-top:18px;">
+      <div class="warn-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Trvalý průjem 5+ dní
+      </div>
+      <div class="info-box-content">
+        Pokud se trávení nezlepší ani po 2–3 týdnech striktního low-FODMAP, jdi k lékaři. Stojí za to vyloučit SIBO, celiakii nebo zánětlivá střevní onemocnění. Jídelníček nevyřeší skutečné zdravotní problémy.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ PREP ============ -->
+<section id="prep">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="breadcrumb">
+          <span>Collections</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Příprava</span>
+        </div>
+        <h1>Příprava na týden</h1>
+        <div class="topbar-subtitle">Sobota · ~2 hodiny práce · vystačí na 7 dní · větší porce kvůli bulku</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header">
+        <div class="card-title">Checklist</div>
+        <div class="card-sub" id="prepProgress">0 / 11 hotovo</div>
+      </div>
+      <div class="checklist" id="prepChecklist"></div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Proč se maso nepripraví celé v sobotu
+      </div>
+      <div class="info-box-content">
+        Vařené maso vydrží v lednici <strong>max 3 dny</strong>. Pokud uvaříš všechno hovězí v sobotu, ve středu/čtvrtek by už nebylo bezpečné.
+      </div>
+      <div class="info-box-content" style="margin-top:8px;">
+        <strong style="color:var(--green-ink);">Sobota:</strong> 6 kuřat/krůtí (~900 g) + 400 g hovězího + 2 porce ryby pro neděli/pondělí.
+      </div>
+      <div class="info-box-content">
+        <strong style="color:var(--green-ink);">Středa večer:</strong> Mini-prep ~20 min — opečeš dalších 300 g hovězího + 2 kuřecí prsa pro pátek.
+      </div>
+    </div>
+
+    <div class="section-title">Recept · Vaječné muffiny</div>
+    <div class="section-sub">Snídaně připravená dopředu · 6 muffinů = 2 plné snídaně</div>
+
+    <div class="card" style="overflow:hidden;">
+      <div class="modal-meta-row" style="border-bottom: 1px solid var(--border);">
+        <div class="key-val">
+          <div class="key-val-k">Čas</div>
+          <div class="key-val-v">25 min</div>
+          <div class="key-val-sub">5 min aktivně</div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Vydá</div>
+          <div class="key-val-v">6 ks</div>
+          <div class="key-val-sub">= 2 porce</div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Per porce</div>
+          <div class="key-val-v">~245</div>
+          <div class="key-val-sub">kcal</div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Vydrží</div>
+          <div class="key-val-v">5 dní</div>
+          <div class="key-val-sub">v lednici</div>
+        </div>
+      </div>
+      <div style="padding: 18px 22px; display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+        <div>
+          <div class="modal-section-title">Suroviny</div>
+          <ul class="modal-ingredients" style="border-bottom:none;">
+            <li><span class="modal-ing-bullet"></span><span>6 vajec</span></li>
+            <li><span class="modal-ing-bullet"></span><span>60 g tvrdého sýra (čedar/eidam) nastrouhaného</span></li>
+            <li><span class="modal-ing-bullet"></span><span>100 g krůtí šunky <em style="color:var(--ink-3);">(bez česneku, cibule, inulinu!)</em></span></li>
+            <li><span class="modal-ing-bullet"></span><span>Hrst čerstvého špenátu</span></li>
+            <li><span class="modal-ing-bullet"></span><span>Sůl, pepř, oregano, bazalka</span></li>
+          </ul>
+        </div>
+        <div>
+          <div class="modal-section-title">Postup</div>
+          <ol style="padding-left:20px; font-size:13px; color:var(--ink-2); line-height:1.6;">
+            <li style="padding:3px 0;">Předehřej troubu na 180 °C.</li>
+            <li style="padding:3px 0;">Vejce rozšlehat se solí a kořením.</li>
+            <li style="padding:3px 0;">Přidat sýr, šunku a špenát.</li>
+            <li style="padding:3px 0;">Nalít do silikonových košíčků (3/4 objemu).</li>
+            <li style="padding:3px 0;">Péct 20 min, do zlatova.</li>
+            <li style="padding:3px 0;">Vychladit, do uzavřené krabičky.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg>
+        Investice na začátek
+      </div>
+      <div class="info-box-content">
+        <strong>~500 Kč</strong> za 8–10 skleniček s těsněním (masonky) a 5–6 plastových boxů. Vydrží roky a ušetří hodiny každý týden.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ SHOPPING ============ -->
+<section id="shopping">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="breadcrumb">
+          <span>Collections</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Nákup</span>
+        </div>
+        <h1>Nákupní seznam</h1>
+        <div class="topbar-subtitle">Týdenní zásoby · klikni a odškrtni si</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary" id="resetShop">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset
+      </button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="warn-box" style="margin-top:0; margin-bottom:14px;">
+      <div class="warn-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Pozor na složení
+      </div>
+      <div class="info-box-content">
+        U <strong>krůtí šunky</strong> a <strong>whey proteinu</strong> vždy čti složení. Hledáš: BEZ česneku, BEZ cibule, BEZ inulinu, BEZ čekanky, BEZ sladidel (sorbitol, xylitol).
+      </div>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+</section>
+
+<!-- ============ RULES ============ -->
+<section id="rules">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="breadcrumb">
+          <span>Collections</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Anti-nafouknutí</span>
+        </div>
+        <h1>Anti-nafouknutí pravidla</h1>
+        <div class="topbar-subtitle">Striktně 4 týdny · viditelný efekt už za 5–10 dní</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <div class="rules-grid">
+      <div class="rules-card avoid">
+        <div class="rules-card-header"><span class="dot"></span>Vyhni se</div>
+        <ul class="rules-list">
+          <li><strong>Cibule, česnek, pórek, šalotka</strong></li>
+          <li><strong>Brokolice, květák, zelí</strong>, růžičková kapusta</li>
+          <li><strong>Fazole, čočka, cizrna, hrách</strong>, sója</li>
+          <li><strong>Houby</strong> (všechny druhy)</li>
+          <li><strong>Jablko, hruška, mango</strong>, meloun, třešně</li>
+          <li><strong>Med</strong> nad 10 g/jídlo</li>
+          <li><strong>Sladidla:</strong> sorbitol, xylitol, inulin, čekanka</li>
+          <li><strong>Proteinové tyčinky</strong> s inulinem</li>
+          <li><strong>Běžné mléko</strong> (nahrad lactose-free)</li>
+          <li><strong>Sycené nápoje</strong> včetně perlivé vody</li>
+          <li><strong>Žvýkačky</strong> (polykáš vzduch)</li>
+        </ul>
+      </div>
+      <div class="rules-card prefer">
+        <div class="rules-card-header"><span class="dot"></span>Preferuj</div>
+        <ul class="rules-list">
+          <li><strong>Maso:</strong> kuřecí, krůtí, hovězí, ryby, vejce</li>
+          <li><strong>Mléčné:</strong> skyr, lactose-free tvaroh, tvrdé sýry</li>
+          <li><strong>Sacharidy:</strong> bílá rýže, oves, brambory, batáty</li>
+          <li><strong>Zelenina:</strong> cuketa, mrkev, paprika, okurka, špenát, fazolky</li>
+          <li><strong>Ovoce:</strong> banán, jahody, borůvky, kiwi, pomeranč</li>
+          <li><strong>Tuky:</strong> olivový olej, mandle, vlašské ořechy</li>
+          <li><strong>Náhrada česneku:</strong> olej s česnekovou příchutí</li>
+          <li><strong>Náhrada cibule:</strong> pažitka, zelené části cibulky</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-title">Denní návyky</div>
+    <div class="habits-grid">
+      <div class="habit-card">
+        <div class="habit-num">1</div>
+        <div class="habit-content"><strong>Jez pomalu</strong><p>Pořádně žvýkej. Rychlé jedení = polykání vzduchu = nafouknutí.</p></div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">2</div>
+        <div class="habit-content"><strong>Nepij litry vody k jídlu</strong><p>Ředí žaludeční šťávy a zhoršuje trávení.</p></div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">3</div>
+        <div class="habit-content"><strong>Čaj po jídle</strong><p>Máta nebo zázvor — prokázané proti nafouknutí.</p></div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">4</div>
+        <div class="habit-content"><strong>Procházka po večeři</strong><p>10 min zrychlí vyprazdňování žaludku.</p></div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">5</div>
+        <div class="habit-content"><strong>S. boulardii</strong><p>Probiotikum (Enterol) — nejlepší evidence pro chronické nafouknutí.</p></div>
+      </div>
+      <div class="habit-card">
+        <div class="habit-num">6</div>
+        <div class="habit-content"><strong>Eliminační test</strong><p>Pokud něco nesedí, vyřaď to na 3 dny a pozoruj reakci.</p></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ CARDIO ============ -->
+<section id="cardio">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="breadcrumb">
+          <span>Collections</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Cardio</span>
+        </div>
+        <h1>Cardio plán</h1>
+        <div class="topbar-subtitle">Při bulku méně · 1–2× týdně, jen pro zdraví srdce</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+
+    <div class="kpi-row" style="margin-bottom:18px; grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi">
+        <div class="kpi-label">Frekvence</div>
+        <div><span class="kpi-value" style="font-size:24px;">1–2</span><span class="kpi-unit">× týdně</span></div>
+        <div class="kpi-meta">méně než při deficitu</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Tepová frekvence</div>
+        <div><span class="kpi-value" style="font-size:20px;">120–140</span><span class="kpi-unit">bpm</span></div>
+        <div class="kpi-meta">Zone 2 (aerobní)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Spáleno</div>
+        <div><span class="kpi-value" style="font-size:22px;">~250</span><span class="kpi-unit">kcal/týd</span></div>
+        <div class="kpi-meta">malá ztráta surplusu</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Délka</div>
+        <div><span class="kpi-value" style="font-size:18px;">25–30</span><span class="kpi-unit">min</span></div>
+        <div class="kpi-meta">chůze do kopce</div>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:hidden;">
+      <div class="card-header">
+        <div class="card-title">Týdenní rozvrh</div>
+        <div class="card-sub">Silový + cardio + odpočinek</div>
+      </div>
+      <table class="week-table" style="border:none; border-radius:0;">
+        <thead>
+          <tr><th>Den</th><th>Aktivita</th><th>Délka</th><th>Intenzita</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="day-cell">Po</td><td>Odpočinek</td><td class="num">—</td><td>regenerace</td></tr>
+          <tr class="training"><td class="day-cell">Út</td><td>Silový trénink</td><td class="num">~60 min</td><td>20:00, vysoká</td></tr>
+          <tr><td class="day-cell">St</td><td>Chůze do kopce</td><td class="num">25 min</td><td>TF 120–140</td></tr>
+          <tr class="training"><td class="day-cell">Čt</td><td>Silový trénink</td><td class="num">~60 min</td><td>20:00, vysoká</td></tr>
+          <tr><td class="day-cell">Pá</td><td>Odpočinek</td><td class="num">—</td><td>regenerace</td></tr>
+          <tr><td class="day-cell">So</td><td>Chůze (volitelně)</td><td class="num">25–30 min</td><td>TF 120–140 + prep day</td></tr>
+          <tr class="training"><td class="day-cell">Ne</td><td>Silový trénink</td><td class="num">~60 min</td><td>20:00, vysoká</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-box">
+      <div class="info-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        Proč při bulku méně cardia
+      </div>
+      <div class="info-box-content">
+        Každá hodina cardia = ~300–400 spálených kcal, které musíš nahradit jídlem. Pálíš to, co nabíráš. <strong>Nech zachovat 1–2× týdně 25–30 min</strong> jen pro zdraví srdce a regeneraci — víc už by ti začalo brát z surplusu, který potřebuješ pro nárůst svalu.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESCUE ============ -->
+<section id="rescue">
+  <div class="topbar">
+    <div style="display:flex; align-items:flex-end; gap:0;">
+      <button class="mobile-toggle" data-mobile-toggle>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="breadcrumb">
+          <span>Collections</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Záchranný den</span>
+        </div>
+        <h1>Záchranný den</h1>
+        <div class="topbar-subtitle">Pouze při akutních trávicích problémech · ~1 240 kcal · reset střev</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="warn-box" style="margin-top:0; margin-bottom:14px;">
+      <div class="warn-box-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Pravidla použití při bulku
+      </div>
+      <div class="info-box-content">
+        Tohle je den jen <strong>když máš akutní trávicí problémy</strong> (nafouknutí, průjem, zvracení). Při bulku ti vypadne ~1 700 kcal — neopakuj víckrát než 1× za 2 týdny, jinak ti to bude brzdit nárůst svalu. Druhý den se vrať na plný plán.
+      </div>
+    </div>
+    <div class="recipes-grid" id="rescueGrid"></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ===========================================================
+// MEAL DATA
+// ===========================================================
+const meals = {
+  breakfast: [
+    { n:1, name:'Overnight oats', tag:'snídaně', time:'5 min', kcal:635, p:32, c:90, f:13, color:1, ingredients:['60 g ovesných vloček (syrové, do sklenice)','200 g skyru','150 ml lactose-free mléka','10 g medu','1 banán nakrájený (přidat ráno)','10 g vlašských ořechů (~5 půlek, přidat ráno)','Skořice'], note:'Připrav v sobotu 3 sklenice najednou. Vydrží 3 dny v lednici. Nulové vaření ráno.' },
+    { n:2, name:'Skyr bowl', tag:'snídaně', time:'2 min', kcal:625, p:32, c:92, f:13, color:2, ingredients:['200 g skyru (1 kelímek)','60 g ovesných vloček (syrových)','1 banán','100 g zmrazených malin nebo borůvek','10 g medu','10 g vlašských ořechů (~5 půlek) nebo mandlí (~8 ks)'], note:'Zmrazené ovoce ochladí bowl a rozmrazí se samo.' },
+    { n:3, name:'Vaječné muffiny + toust + banán', tag:'snídaně', time:'mikrovlnka 45 s', kcal:625, p:27, c:60, f:22, color:3, ingredients:['3 vaječné muffiny (z prepu)','80 g kváskového chleba','10 g másla','1 banán','1 rajče'], note:'Muffiny vydrží 4–5 dní v lednici, 1 měsíc v mrazáku. Recept v sekci Příprava.' },
+    { n:4, name:'Mikrovlnná ovesná kaše', tag:'snídaně', time:'2 min', kcal:605, p:35, c:85, f:9, color:4, ingredients:['60 g ovesných vloček + 200 ml lactose-free mléka','Mikrovlnka 2 min, zamíchat, ještě 30 s','PO ohřátí: 30 g whey, 1 banán, 100 g jahod, 10 g medu'], note:'Whey přidávej až po ohřátí — jinak se srazí.' },
+    { n:5, name:'Proteinový pudink', tag:'snídaně', time:'studený', kcal:680, p:48, c:80, f:14, color:5, ingredients:['200 g skyru','30 g whey proteinu (čokoládový)','100 ml lactose-free mléka','50 g ovesných vloček','Ráno: 1 banán + 100 g jahod, 12 g mandlí (~10 ks), skořice'], note:'Smíchej v sobotu, za hodinu zhoustne. Nejvyšší protein z variant — ideální pro tréninkové dny.' }
+  ],
+  snackAm: [
+    { n:1, name:'Vejce + chlebíčky + máslo', tag:'svačina', time:'0 min', kcal:350, p:22, c:30, f:16, color:1, ingredients:['3 vejce natvrdo (z prepu)','3 rýžové chlebíčky','5 g másla','1 rajče nebo 5 cherry'] },
+    { n:2, name:'Tuňák na chlebíčcích + vejce', tag:'svačina', time:'2 min', kcal:360, p:30, c:28, f:18, color:2, ingredients:['100 g tuňáka ve vlastní šťávě (odkapaný)','3 rýžové chlebíčky','1 vejce natvrdo','Okurka nebo rajče','10 g olivového oleje'] },
+    { n:3, name:'Kuřecí salát bowl', tag:'svačina', time:'3 min', kcal:350, p:36, c:30, f:12, color:3, ingredients:['130 g kuřecího prsa (z prepu)','3 rýžové chlebíčky','1 rajče, okurka','10 g olivového oleje + citron'] },
+    { n:4, name:'Skyr s ovocem a ořechy', tag:'svačina', time:'1 min', kcal:375, p:22, c:50, f:5, color:4, ingredients:['200 g skyru','40 g ovesných vloček','100 g borůvek','10 g medu'] },
+    { n:5, name:'Shake + banán + mandle', tag:'svačina', time:'1 min', kcal:315, p:32, c:28, f:8, color:5, ingredients:['30 g whey + 250 ml vody','1 banán','18 g mandlí (~15 ks)'] },
+    { n:6, name:'Snack box', tag:'svačina', time:'0 min', kcal:340, p:36, c:22, f:12, color:6, ingredients:['100 g kuřecího prsa nakrájené','2 vejce natvrdo','Hrst cherry rajčátek','2 rýžové chlebíčky'] }
+  ],
+  lunch: [
+    { n:1, name:'Kuřecí + rýže + zelenina', tag:'oběd', time:'mikrovlnka 3 min', kcal:625, p:42, c:65, f:18, color:1, ingredients:['130 g uvařené kuřecí prsa (z prepu)','210 g uvařené jasmínové rýže (z prepu)','160 g dušené cukety nebo mrkve','15 g olivového oleje','Bylinky (oregano, bazalka), sůl'], note:'Mikrovlnka 2–3 min. Rýži a kuře máš ze sobotního prepu.' },
+    { n:2, name:'Krůtí + batáty + paprika', tag:'oběd', time:'mikrovlnka 3 min', kcal:620, p:40, c:62, f:18, color:2, ingredients:['130 g uvařené krůtí prso','220 g vařené batáty (pečené)','160 g dušené papriky','12 g olivového oleje s česnekovou příchutí'], note:'Batáty piec na plechu společně s kuřaty 25 min/180 °C.' },
+    { n:3, name:'Hovězí + rýže + mrkev', tag:'oběd', time:'mikrovlnka 3 min', kcal:670, p:42, c:65, f:22, color:3, ingredients:['130 g uvařené libové hovězí (proužky)','210 g uvařené rýže basmati','160 g dušené mrkve s cuketou','12 g olivového oleje'], note:'Ve středu opéct 300 g hovězího 5 min, vydrží 3 dny.' },
+    { n:4, name:'Losos + quinoa + fazolky', tag:'oběd', time:'mikrovlnka 3 min', kcal:640, p:40, c:50, f:28, color:4, ingredients:['150 g uvařeného lososa','200 g uvařené quinoy','160 g dušené zelené fazolky (zmrazené)','8 g olivového oleje + citron'], note:'Losos vydrží v lednici 2–3 dny. Ideální brzo v týdnu.' },
+    { n:5, name:'Tuňákový bowl', tag:'oběd', time:'5 min', kcal:620, p:50, c:65, f:18, color:5, ingredients:['160 g tuňáka ve vlastní šťávě (odkapaný)','210 g uvařené rýže (z prepu)','1 vejce natvrdo','1 rajče + okurka','10 g olivového oleje + citron','Hrst špenátu nebo salátu'], note:'Tuňák v plechovce vydrží měsíce. Když zapomeneš jídlo doma.' }
+  ],
+  snackPm: [
+    { n:1, name:'Shake + banán', tag:'svačina', time:'1 min', kcal:240, p:30, c:28, f:2, color:1, ingredients:['35 g whey + 250 ml vody','1 banán'] },
+    { n:2, name:'Skyr + kiwi + mandle', tag:'svačina', time:'1 min', kcal:245, p:22, c:22, f:10, color:2, ingredients:['200 g skyru','1 kiwi','15 g mandlí (~12 ks)'] },
+    { n:3, name:'Tvaroh + ovoce + ořechy', tag:'svačina', time:'1 min', kcal:295, p:33, c:13, f:16, color:3, ingredients:['250 g polotučného tvarohu (celé balení)','50 g jahod nebo malin','7 g vlašských ořechů (~3 půlky)'], note:'Polotučný tvaroh má 230 kcal/balení. Místo většího množství ovoce a ořechů máš víc proteinu — lepší pro nárůst svalu.' },
+    { n:4, name:'Vejce + chlebíček + sýr', tag:'svačina', time:'0 min', kcal:260, p:18, c:12, f:16, color:4, ingredients:['3 vejce natvrdo','1 rýžový chlebíček','20 g tvrdého sýra','1 rajče'] },
+    { n:5, name:'Pomeranč + sýr + chlebíčky', tag:'svačina', time:'1 min', kcal:320, p:18, c:25, f:18, color:5, ingredients:['1 pomeranč','50 g tvrdého sýra','2 rýžové chlebíčky'] },
+    { n:6, name:'Cottage + ovoce + chlebíček', tag:'svačina', time:'2 min', kcal:285, p:18, c:29, f:11, color:6, ingredients:['150 g cottage (celé balení)','100 g jahod, borůvek nebo malin','2 rýžové chlebíčky','Pažitka, pepř (volitelně)'], note:'Cottage je laktóza-friendly varianta tvarohu — víc tuku, méně sušiny. Můžeš sladkou (s ovocem) i slanou (vyhoď ovoce, přidej víc pažitky a černý pepř, mažeš na chlebíček).' }
+  ],
+  preworkout: [
+    { n:1, name:'Pre-WO · doma', tag:'pre-WO', time:'1 min', kcal:255, p:17, c:50, f:1, color:6, ingredients:['2 rýžové chlebíčky + 10 g džemu','1 banán','15 g whey ve vodě'], note:'60–75 min před tréninkem. Nízká vláknina, žádné nafouknutí.' },
+    { n:2, name:'Pre-WO · v práci', tag:'pre-WO', time:'2 min', kcal:255, p:22, c:35, f:3, color:1, ingredients:['130 g uvařené bílé rýže (z prepu, ohřát)','80 g krůtí šunky (balené)','Okurka'], note:'Pokud nemáš čas zajet domů.' }
+  ],
+  postworkout: [
+    { n:1, name:'Velký post-WO shake + oats', tag:'post-WO', time:'2 min', kcal:355, p:32, c:45, f:3, color:1, ingredients:['30 g whey','250 ml vody','1 banán','30 g ovesných vloček (může být i syrové)','5 g medu'], note:'Klíčové pro nárůst svalu! Po tréninku tělo nasává kalorie přímo do svalů, ne do tuku. Pokud nenacpeš, ztratíš nejlepší okno dne.' },
+    { n:2, name:'Post-WO + ananas + oats', tag:'post-WO', time:'2 min', kcal:340, p:32, c:45, f:3, color:2, ingredients:['30 g whey','250 ml vody','150 g ananasu','30 g ovesných vloček'], note:'Sladší varianta. Bromelain v ananasu pomáhá strávit protein.' }
+  ],
+  dinner: [
+    { n:1, name:'Hovězí + brambory + zelenina', tag:'večeře', time:'25 min', kcal:600, p:42, c:55, f:20, color:3, ingredients:['140 g uvařené libové hovězí (180 g syrové)','200 g vařené brambory (oloupané)','150 g dušená mrkev + 50 g dušená cuketa','10 g olivového oleje','Pažitka, sůl, bylinky'], note:'Brambory uvař dopředu (vydrží 3 dny), večer jen ohřát.' },
+    { n:2, name:'Kuře + rýže + cuketa', tag:'večeře', time:'15 min', kcal:620, p:48, c:65, f:18, color:1, ingredients:['140 g uvařené kuřecí prsa (na plátky)','180 g uvařené rýže jasmínové (z prepu)','200 g dušené cukety + mrkve','10 g olivového oleje','Citron, bylinky'], note:'Po tréninku nejrychlejší varianta — všechno máš nachystané.' },
+    { n:3, name:'Losos + batáty + fazolky', tag:'večeře', time:'25 min', kcal:610, p:40, c:50, f:25, color:4, ingredients:['135 g uvařený losos (170 g syrové)','200 g vařené batáty (společně v troubě)','180 g dušené zelené fazolky (zmrazené, mikrovlnka 3 min)','5 g olivového oleje, citron'], note:'Losos + batáty v troubě 15 min na 180 °C. Trouba pracuje za tebe.' }
+  ],
+  bedtime: [
+    { n:1, name:'Tvaroh + skořice', tag:'před spaním', time:'1 min', kcal:230, p:32, c:8, f:11, color:2, ingredients:['250 g polotučného tvarohu (celé balení)','Špetka skořice'], note:'Plná pre-bed dávka kaseinu — 32 g pomalu se vstřebávajícího proteinu před spaním = optimální noční svalová syntéza. Polotučný má víc tuku, takže delší vstřebávání a větší sytost přes noc.' },
+    { n:2, name:'Skyr + vlašské ořechy', tag:'před spaním', time:'1 min', kcal:170, p:19, c:8, f:7, color:5, ingredients:['200 g skyru','10 g vlašských ořechů (~5 půlek)'], note:'Vyšší tuk, větší sytost.' },
+    { n:3, name:'Whey shake (nouzovka)', tag:'před spaním', time:'1 min', kcal:115, p:25, c:2, f:1, color:6, ingredients:['30 g whey ve vodě'], note:'Pokud jsi zapomněl tvaroh nebo nechceš mléčné na noc.' }
+  ],
+  rescue: [
+    { n:1, name:'Záchrana · snídaně', tag:'záchrana', time:'5 min', kcal:300, p:20, c:18, f:18, color:1, ingredients:['3 vejce míchaná','2 rýžové chlebíčky','1 rajče'] },
+    { n:2, name:'Záchrana · oběd', tag:'záchrana', time:'5 min', kcal:440, p:30, c:60, f:4, color:2, ingredients:['115 g kuřecí prsa','150 g bílá rýže','Okurka, mrkev'] },
+    { n:3, name:'Záchrana · svačina', tag:'záchrana', time:'1 min', kcal:220, p:25, c:28, f:1, color:3, ingredients:['30 g whey','1 banán'] },
+    { n:4, name:'Záchrana · večeře', tag:'záchrana', time:'15 min', kcal:280, p:28, c:8, f:6, color:4, ingredients:['120 g treska/štikozubec','200 g dušená cuketa'] }
+  ]
+};
+
+// ===========================================================
+// DAY TIMELINES
+// ===========================================================
+const timelines = {
+  training: {
+    target: { kcal: 3130, p: 195, c: 410, f: 95 },
+    items: [
+      { time: '07:00', name: 'Snídaně', category: 'breakfast', desc: 'Vydatná snídaně — oats + protein + ořechy', kcal: 620, p: 32, c: 85, f: 16 },
+      { time: '10:30', name: 'Dopolední svačina', category: 'snackAm', desc: 'Vejce + chlebíčky / kuřecí bowl + ořechy', kcal: 320, p: 22, c: 25, f: 14 },
+      { time: '13:00', name: 'Oběd', category: 'lunch', desc: 'Kuřecí + rýže / krůtí + batáty', kcal: 620, p: 40, c: 65, f: 18 },
+      { time: '16:00', name: 'Odpolední svačina', category: 'snackPm', desc: 'Shake + banán', kcal: 220, p: 30, c: 25, f: 2 },
+      { time: '18:45', name: 'Pre-workout', category: 'preworkout', desc: '60–75 min před tréninkem', kcal: 200, p: 15, c: 35, f: 1 },
+      { time: '20:00', name: 'SILOVÝ TRÉNINK', desc: '~60 min', isWorkout: true },
+      { time: '21:10', name: 'Post-workout', category: 'postworkout', desc: 'Velký shake + banán + oats — klíčové pro nárůst', kcal: 320, p: 30, c: 40, f: 3, isMain: true },
+      { time: '22:00', name: 'Večeře', category: 'dinner', desc: 'Hlavní jídlo — protein + brambory/rýže + zelenina', kcal: 600, p: 42, c: 55, f: 20 },
+      { time: '23:00', name: 'Před spaním', category: 'bedtime', desc: 'Tvaroh + skořice — plná dávka kaseinu', kcal: 230, p: 32, c: 8, f: 11 }
+    ]
+  },
+  rest: {
+    target: { kcal: 2830, p: 195, c: 330, f: 95 },
+    items: [
+      { time: '07:30', name: 'Snídaně', category: 'breakfast', desc: 'Vydatná snídaně — oats + protein', kcal: 650, p: 32, c: 90, f: 17 },
+      { time: '10:30', name: 'Dopolední svačina', category: 'snackAm', desc: 'Větší — 3 vejce + chleba + máslo + ovoce', kcal: 420, p: 25, c: 35, f: 22 },
+      { time: '13:00', name: 'Oběd', category: 'lunch', desc: 'Hlavní jídlo dne', kcal: 680, p: 45, c: 70, f: 22, isMain: true },
+      { time: '16:30', name: 'Odpolední svačina', category: 'snackPm', desc: 'Tvaroh + ovoce + ořechy', kcal: 320, p: 25, c: 25, f: 14 },
+      { time: '19:30', name: 'Večeře', category: 'dinner', desc: 'Méně sacharidů, hodně proteinu', kcal: 530, p: 42, c: 40, f: 20 },
+      { time: '22:00', name: 'Před spaním', category: 'bedtime', desc: 'Tvaroh + skořice nebo whey shake', kcal: 230, p: 32, c: 8, f: 11 }
+    ]
+  }
+};
+
+// ===========================================================
+// PREP CHECKLIST
+// ===========================================================
+const prepItems = [
+  {
+    title: '10 vajec natvrdo',
+    desc: '15 min vaření · pro svačiny na celý týden (svačiny mají teď 3 vejce)',
+    time: '15 min',
+    activeTime: '2 min',
+    storage: '7 dní v lednici (ve skořápce)',
+    ingredients: ['10 vajec', 'voda', '1 lžička soli (volitelně)'],
+    steps: [
+      'Vejce dej do hrnce ve studené vodě, ať jsou všechna pod hladinou.',
+      'Přidej špetku soli — pomáhá při loupání, kdyby praskla.',
+      'Přiveď k varu na vysokém plameni.',
+      'Jakmile se začne vařit, stáhni na střední plamen a vař 9–10 min.',
+      'Slij a okamžitě nalij studenou vodu do hrnce — zastaví vaření, snadnější loupání.',
+      'Nech 2–3 min ve studené vodě, pak vyjmout.',
+      'Skladuj NEoloupané v lednici, oloupej až před jídlem.'
+    ],
+    tip: 'Pokud loupeš špatně, vejce byla moc čerstvá. Týden staré vejce se loupe lépe než 2 dny staré.'
+  },
+  {
+    title: '6 kuřecích/krůtích prsou (~900 g syrové)',
+    desc: 'trouba 180 °C, 25 min · 3 obědy + 2 svačiny + 1 záloha',
+    time: '30 min',
+    activeTime: '5 min',
+    storage: '3 dny v lednici, 2 měs. v mrazáku',
+    ingredients: ['6 kuřecích nebo krůtích prsou (~900 g)', '20 g olivového oleje', 'sůl, pepř', 'oregano, bazalka, tymián', '(volitelně) 50 ml vody na plech'],
+    steps: [
+      'Předehřej troubu na 180 °C.',
+      'Prsa potři olejem (rukama, ať to drží), osol, opepři, posyp bylinkami.',
+      'Plech vystel pečicím papírem, prsa rozlož s mezerami (ne nahromaděná).',
+      'POZOR — nejtlustší prsa nakroj zboku do hloubky cca poloviny, ať se propečou rovnoměrně.',
+      'Pokud máš krůtí (sušší), nalij na plech 50 ml vody — pára pomůže.',
+      'Pec 25 min při 180 °C. Velké prso (200+ g) až 30 min.',
+      'Hotové: vnitřní teplota 75 °C, šťáva při napíchnutí čirá (ne růžová).',
+      'NECH 5 min odpočinout pod alobalem — důležité, jinak vyteče šťáva.',
+      'Vychladnout, pak do uzavřených krabiček po 1 prsu.'
+    ],
+    tip: 'Krůtí dej na plech současně s kuřecím — stejná teplota, stejný čas. Zaměnitelné 1:1, krůtí je o 5 % méně kalorické.'
+  },
+  {
+    title: '400 g libového hovězího v troubě',
+    desc: 'trouba 180 °C, 20 min · pondělí + úterý',
+    time: '25 min',
+    activeTime: '3 min',
+    storage: '3 dny v lednici (vařené)',
+    ingredients: ['400 g libového hovězího (svíčková, zadní, nebo kýta)', '10 g olivového oleje', 'sůl, pepř', 'rozmarýn, tymián, česnekový olej (místo česneku)'],
+    steps: [
+      'Hovězí potři olejem, sůl, pepř, bylinky.',
+      'Plech vystel pečicím papírem, polož kus hovězího vcelku.',
+      'Pec 180 °C, 20 min pro medium (vnitřní 60 °C) — šťavnaté.',
+      'Pro propečenější (well done, vnitřní 70 °C): 25 min.',
+      'NECH 5–10 min odpočinout pod alobalem — KRITICKÉ. Když hned krájíš, vyteče všechna šťáva.',
+      'Pak teprve nakrájej na proužky/plátky napříč vlákny (jinak je tvrdé).',
+      'Skladuj nakrájené v krabičce. Při ohřevu jen na 1 min, jinak ztvrdne.'
+    ],
+    tip: 'Hodíš ho na plech 5 min PO kuřatech — kuře 25 min, hovězí 20 min, končí současně. Méně práce.'
+  },
+  {
+    title: '2 porce ryby (380 g syrové)',
+    desc: 'losos/treska, trouba 12–15 min/180 °C · pondělí + úterý',
+    time: '15 min',
+    activeTime: '3 min',
+    storage: '2 dny v lednici, jíst brzo v týdnu',
+    ingredients: ['2× 190 g lososa nebo tresky', '5 g olivového oleje', 'sůl, pepř', '1/2 citronu', 'tymián'],
+    steps: [
+      'Předehřej troubu na 180 °C.',
+      'Rybu polož na pečicí papír, pokap olejem, osol, opepři, posyp tymiánem.',
+      'Polož na ni 2 plátky citronu (nebo vymačkej šťávu).',
+      'Pro losos: 12–15 min při 180 °C (uvnitř lehce růžový = ideální, ne přepečený).',
+      'Pro treska: 12 min při 180 °C (bílá, lupínkovitě se loupe).',
+      'Hotová, když lupínky se rozdělují, ale neztratila vlhkost.',
+      'Vychladit, do uzavřené krabičky.'
+    ],
+    tip: 'Rybu dej na PLECH 2 (samostatný), pustíš ji v poslední 12–15 min. Jinak by zaschla. Ideální jíst pondělí + úterý — nejdéle čerstvé.'
+  },
+  {
+    title: 'Velký hrnec rýže',
+    desc: '600 g syrové = ~1,8 kg uvařené · 4 dny obědů + post-WO',
+    time: '20 min',
+    activeTime: '5 min',
+    storage: '4 dny v lednici (kritické: rychle vychladit!)',
+    ingredients: ['600 g jasmínové nebo basmati rýže', '900 ml vody (1,5× objem)', '1 lžička soli'],
+    steps: [
+      'Rýži propláchni v sítku 30 sekund pod studenou vodou (méně škrobu, méně lepkavosti).',
+      'Do velkého hrnce dej rýži + 900 ml vody + sůl.',
+      'Přiveď k varu na velkém plameni.',
+      'Jakmile vře, stáhni na nejnižší plamen, ZAKRYJ pokličkou, vař 12 min.',
+      'NEODKRÝVEJ — pára vaří. Po 12 min vypni a nech ještě 5 min stát zakryté.',
+      'Provzdušni vidličkou.',
+      'KRITICKÉ: Rozprostři na velký talíř/plech, ať rychle vychladne (do 1 hodiny v lednici!). Teplá rýže v lednici = bakterie B. cereus, otrava.',
+      'Po vychladnutí porcuj do krabiček po ~250 g (1,5 porce).'
+    ],
+    tip: 'Při ohřívání v mikrovlnce přidej 1 lžíci vody do krabičky a zakryj — rýže neztvrdne, naroste pára. Nikdy neohřívej 2×.'
+  },
+  {
+    title: '4 batáty pečené (na kostky)',
+    desc: 'trouba 180 °C, 25–30 min · větší porce na obědy a večeře',
+    time: '35 min',
+    activeTime: '5 min',
+    storage: '3 dny v lednici, ohřev v mikrovlnce',
+    ingredients: ['4 středně velké batáty (~800 g)', '10 g olivového oleje', 'sůl, pepř', '(volitelně) oregano, paprika sladká'],
+    steps: [
+      'Předehřej troubu na 180 °C.',
+      'Batáty UMYJ pod tekoucí vodou, slup NECHEJ — vláknina + vitamíny + drží tvar.',
+      'Nakrájej na kostky ~2–3 cm (rychlejší pečení, porce už hotové).',
+      'Hoď na plech s pečicím papírem, pokap olejem, osol, opepři.',
+      'Promíchej rukou, ať jsou všechny pokryté olejem (jinak některé spálí, jiné zůstanou syrové).',
+      'Rozprostři v JEDNÉ vrstvě (ne na sobě), jinak se dusí, ne pečou.',
+      'Pec 25–30 min, v půlce (po 15 min) PROMÍCHEJ.',
+      'Hotové: nůž projde měkce, okraje karamelizované, ale ne černé.',
+      'Vychladnout, do krabiček.'
+    ],
+    tip: 'Pec současně s kuřaty/hovězím na druhém plechu — stejná teplota, stejný čas. Šetří elektřinu i čas. Pokud chceš křupavější, dej na konci 5 min při 200 °C.'
+  },
+  {
+    title: '1,2 kg brambor uvařených',
+    desc: 'na večeři Hovězí + brambory + zelenina · 4 porce á 200 g vařené',
+    time: '25 min',
+    activeTime: '5 min',
+    storage: '3 dny v lednici (vařené, oloupané)',
+    ingredients: ['1,5 kg brambor varného typu B (středně pevné — Adéla, Marabel)', '2 lžičky soli', 'voda na zalití'],
+    steps: [
+      'Brambory umyj. Můžeš oloupat NEBO nechat slupku — slupka udrží vitamíny + tvar, méně práce.',
+      'Velké kusy rozkroj napůl (ať mají všechny podobnou velikost, vaří se rovnoměrně).',
+      'Do velkého hrnce dej brambory, zalij studenou vodou — ať jsou JUST pod hladinou.',
+      'Přidej 2 lžičky soli, přiveď k varu na velkém plameni.',
+      'Jakmile vře, stáhni na střední plamen a vař 18–22 min (záleží na velikosti).',
+      'Hotové, když nůž projde lehce do středu (jako horké máslo).',
+      'Slij vodu, nech 2 min vypařit páru — důležité, jinak se v krabičce zaperlí.',
+      'Pokud máš ve slupce: oloupat za tepla (slupka jde sama), nebo nech ve slupce a oloupej až den použití.',
+      'Nakrájet na poloviny/čtvrtky, do 3–4 krabiček.',
+      'Při ohřevu v mikrovlnce: 1,5–2 min, případně pokap trochou oleje, ať nejsou suché.'
+    ],
+    tip: 'Brambory jsou v plánu jen na 2 večeře (pondělí + čtvrtek), takže 1,2 kg uvařených (= 4 porce á 200 g) bohatě stačí. Zbylé brambory ráno přihoď na pánev se 2 vejci — improvizovaná snídaně, žádný plýtvání.'
+  },
+  {
+    title: '3× overnight oats',
+    desc: 'do skleniček, 60 g vloček každá · snídaně na 3 dny',
+    time: '5 min',
+    activeTime: '5 min',
+    storage: '3 dny v lednici (po Po, Út, St — ne déle)',
+    ingredients: ['180 g ovesných vloček (60 g/sklenice)', '600 g skyru (200 g/sklenice)', '450 ml lactose-free mléka (150 ml/sklenice)', '30 g medu (10 g/sklenice)', '30 g vlašských ořechů (~15 půlek, 10 g/sklenice — přidat až ráno!)', '3 banány (přidat až ráno!)', 'skořice'],
+    steps: [
+      'Vezmi 3 sklenice s víčkem (masonky, ~400 ml).',
+      'Do každé: 60 g vloček, 200 g skyru, 150 ml mléka, 10 g medu, špetka skořice.',
+      'Promíchat vidličkou ve sklenici.',
+      'Zavřít víčko, do lednice na minimálně 4 hodiny (nejlépe přes noc).',
+      'RÁNO — 5 min před jídlem: nakrájet banán a posypat ořechy.',
+      'NEPRIDÁVEJ banán/ořechy předem — banán zhnědne, ořechy změknou.'
+    ],
+    tip: 'Místo banánu jde použít zmrazené borůvky/maliny — ty můžeš dát rovnou do sklenice (rozmrznou v lednici a zbarví celý jogurt).'
+  },
+  {
+    title: '6–8 vaječných muffinů',
+    desc: 'recept v sekci níže · na 2–3 dny snídaně',
+    time: '25 min',
+    activeTime: '5 min',
+    storage: '5 dní v lednici, 1 měsíc v mrazáku',
+    ingredients: ['6 vajec', '60 g tvrdého sýra nastrouhaného', '100 g krůtí šunky (BEZ česneku, cibule, inulinu)', 'hrst čerstvého špenátu', 'sůl, pepř, oregano, bazalka', 'silikonové košíčky nebo vystlat papírovými'],
+    steps: [
+      'Předehřej troubu na 180 °C.',
+      'Vejce rozšlehat se solí, pepřem, oreganem v misce.',
+      'Přidat nastrouhaný sýr, nakrájenou šunku, nasekaný špenát.',
+      'Nalít do silikonových košíčků (3/4 objemu, nahoře vykynou).',
+      'Pec 18–20 min při 180 °C, do zlatova.',
+      'Hotové, když střed pevný (nepotřásá se).',
+      'Vychladit v košíčcích, pak do uzavřené krabičky.',
+      'Mrazení: po vychladnutí do sáčku, rozmrazit přes noc v lednici nebo 1 min v mikrovlnce.'
+    ],
+    tip: 'Pokud nemáš silikonové košíčky, vystel plech na muffiny papírovými + vystříkni olejem. Nepřilepí se. Šunku KAŽDOU otoč a zkontroluj složení v obchodě — většina českých má skrytě česnek nebo inulin.'
+  },
+  {
+    title: 'Rozporcovat skyr/tvaroh do krabiček',
+    desc: 'porce 200 g skyr · 250 g tvaroh celé balení · ať je hned po ruce',
+    time: '5 min',
+    activeTime: '5 min',
+    storage: 'do data spotřeby na obalu',
+    ingredients: ['10× skyr 200 g (necháš v originálních kelímcích)', '5× polotučný tvaroh 250 g (originální balení)'],
+    steps: [
+      'Skyr v kelímcích necháš tak — porce 200 g jsou už hotové.',
+      'Tvaroh 250 g se sní celé balení najednou (~230 kcal, 32 g proteinu).',
+      'Tvaroh ti vystačí na ~5 svačin/večerí v týdnu — 3 odpolední svačiny + 2 večeře před spaním.',
+      'Necháš v lednici v originálním obalu, otevřeš až v moment, kdy si chceš svačinu dát.'
+    ],
+    tip: 'Polotučný tvaroh má 92 kcal/100 g (vyšší tuk = lepší sytost). Celé balení 250 g = 230 kcal, 32 g proteinu — ideální večerní dávka kaseinu, sycené, drží přes noc.'
+  },
+  {
+    title: 'Umýt a nakrájet zeleninu',
+    desc: 'mrkev, papriky, okurka — do svačin a obědů',
+    time: '15 min',
+    activeTime: '15 min',
+    storage: '4–5 dní v lednici (mrkev, paprika), 2–3 dny (okurka)',
+    ingredients: ['mrkev (200 g)', 'papriky (2 ks)', 'okurka (1 ks)', 'cherry rajčata (ta neumývej dopředu, jen před jídlem)'],
+    steps: [
+      'Mrkev oloupat, nakrájet na hranolky/proužky (~5 cm) — do uzavřené krabičky se zbytkem vody na dně.',
+      'Papriky umýt, vykuchat, nakrájet na proužky — do krabičky bez vody.',
+      'Okurku umýt — NEKRÁJET dopředu, pustí vodu. Krájet až ten den.',
+      'Cherry rajčata umýt až bezprostředně před jídlem (rychleji se kazí).',
+      'Cuketu na obědy: NEKRÁJEJ dopředu, na rozdíl od ostatních zoxiduje.'
+    ],
+    tip: 'Mrkev v krabičce s 1 lžící vody na dně vydrží křupavá 5 dní. Triknutí, které zachrání, když chceš svačinu během 30 sekund.'
+  },
+  {
+    title: 'STŘEDA — mini-prep (~20 min)',
+    desc: '400 g hovězího + 3 kuřecí/krůtí prsa pro druhou půlku týdne',
+    time: '30 min',
+    activeTime: '5 min',
+    storage: '3 dny v lednici (do soboty = nový velký prep)',
+    ingredients: ['400 g libového hovězího', '3 kuřecí nebo krůtí prsa (~450 g)', 'olivový olej, sůl, pepř, bylinky'],
+    steps: [
+      'Předehřej troubu na 180 °C.',
+      'Plech: 3 kuřecí/krůtí prsa potřená olejem + bylinky (jako v sobotu).',
+      'Plech: 400 g hovězího vcelku, nebo nakrájené na 2 kusy (rychlejší).',
+      'Vše dohromady na 180 °C, 25 min.',
+      'Vychladit, hovězí nakrájet na proužky, do krabiček.'
+    ],
+    tip: 'Proč to nedělat všechno v sobotu? Vařené maso vydrží MAX 3 dny v lednici. Pokud bys uvařil všechno v sobotu, v úterý/středu by bylo nebezpečné jíst. Mini-prep ve středu večer (20 min práce) zachrání druhou půlku týdne — vystačí na Čt/Pá až do dalšího prep dne v sobotu.'
+  }
+];
+
+// ===========================================================
+// SHOPPING LIST
+// ===========================================================
+const shoppingData = {
+  'Proteiny': [
+    'Kuřecí prsa (1,2 kg) — 6 porcí à 170 g syrové',
+    'Krůtí prso (0,5 kg) — 3 porce à 170 g',
+    'Libové hovězí (0,8 kg) — 4 porce à 170 g',
+    'Losos/treska — 2× 190 g = 380 g (2 jídla)',
+    'Vejce (24 ks) — 10 natvrdo, 6 do muffinů, 8 omelety/svačin',
+    'Skyr 200 g (10 ks)',
+    'Polotučný tvaroh 250 g (5 balení)',
+    'Cottage cheese 150 g (3 balení) — varianta odpolední svačiny',
+    'Tvrdý sýr (250 g)',
+    'Krůtí šunka (250 g) — BEZ česneku/cibule!',
+    'Tuňák ve vlastní šťávě (4 konzervy)',
+    'Whey protein (1 kg) — BEZ inulinu/sladidel · spotřeba ~250 g/týden'
+  ],
+  'Sacharidy': [
+    'Rýže jasmínová/basmati (1,5 kg)',
+    'Ovesné vločky (1 kg) — vyšší spotřeba!',
+    'Brambory (2 kg)',
+    'Batáty (4 ks, ~800 g)',
+    'Kvásek/kváskový chléb (1 bochník)',
+    'Rýžové chlebíčky (3 balení, ~35 ks) — vyšší spotřeba',
+    'Quinoa (250 g)'
+  ],
+  'Zelenina': [
+    'Cuketa (3 ks, ~600 g)',
+    'Mrkev (1 kg)',
+    'Papriky (4 ks)',
+    'Zelené fazolky zmrazené (400–500 g)',
+    'Špenát čerstvý (150 g)',
+    'Špenát zmrazený listový (450 g) — záloha',
+    'Okurka (2 ks)',
+    'Rajčata (4 ks) + cherry (250 g)'
+  ],
+  'Ovoce': [
+    'Banány (10 ks) — pre/post-WO + snídaně',
+    'Jahody čerstvé (250 g)',
+    'Borůvky čerstvé (250 g)',
+    'Borůvky/maliny zmrazené (500 g) — overnight oats',
+    'Maliny čerstvé (125 g) — volitelně',
+    'Kiwi (4 ks)',
+    'Pomeranče (4 ks)',
+    'Ananas (1 ks ~1 kg) nebo plechovka'
+  ],
+  'Tuky & doplňky': [
+    'Olivový olej extra virgin (500 ml)',
+    'Olivový olej s česnekovou příchutí (250 ml) ★',
+    'Máslo (250 g)',
+    'Mandle syrové (300 g) — vyšší spotřeba',
+    'Vlašské ořechy (250 g)',
+    'Arašídové máslo 100% (250 g) — pro snídani ★',
+    'Med kvalitní (250 g)',
+    'Džem 100% ovocný'
+  ],
+  'Koření & bylinky': [
+    'Skořice mletá',
+    'Oregano sušené',
+    'Bazalka sušená',
+    'Tymián, rozmarýn',
+    'Pažitka čerstvá (svazek)',
+    'Citron (2 ks)'
+  ]
+};
+
+// ===========================================================
+// HELPERS
+// ===========================================================
+function loadStore(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; }
+}
+function saveStore(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+}
+function fmt(n) {
+  return new Intl.NumberFormat('cs-CZ').format(n);
+}
+
+function thumbStyle(seed) {
+  const hue = 145 + (seed * 11) % 60 - 30;
+  return {
+    background: `repeating-linear-gradient(135deg, oklch(0.93 0.03 ${hue}) 0 6px, oklch(0.95 0.02 ${hue}) 6px 12px)`,
+    labelColor: `oklch(0.42 0.06 ${hue})`
+  };
+}
+
+// ===========================================================
+// MACRO RING (3 concentric arcs)
+// ===========================================================
+function renderMacroRing(target, container) {
+  const size = 180;
+  const stroke = 9;
+  const r1 = (size - stroke) / 2;
+  const r2 = r1 - stroke - 4;
+  const r3 = r2 - stroke - 4;
+
+  const arc = (r, color) => {
+    const C = 2 * Math.PI * r;
+    return `
+      <g transform="rotate(-90 ${size/2} ${size/2})">
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="var(--surface-3)" stroke-width="${stroke}" fill="none"/>
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
+          stroke-dasharray="${C * 0.96} ${C}" stroke-linecap="round"/>
+      </g>
+    `;
+  };
+
+  container.innerHTML = `
+    <svg width="${size}" height="${size}">
+      ${arc(r1, 'var(--protein)')}
+      ${arc(r2, 'var(--carbs)')}
+      ${arc(r3, 'var(--fat)')}
+    </svg>
+    <div class="macro-ring-center">
+      <div class="macro-ring-kcal">${fmt(target.kcal)}</div>
+      <div class="macro-ring-label">kcal · cíl</div>
+    </div>
+  `;
+}
+
+// ===========================================================
+// DAY MAP
+// ===========================================================
+const dayMap = {
+  po: { full: 'Pondělí', type: 'rest' },
+  ut: { full: 'Úterý', type: 'training' },
+  st: { full: 'Středa', type: 'rest' },
+  ct: { full: 'Čtvrtek', type: 'training' },
+  pa: { full: 'Pátek', type: 'rest' },
+  so: { full: 'Sobota', type: 'rest' },
+  ne: { full: 'Neděle', type: 'training' }
+};
+// Date.getDay(): 0=Sun, 1=Mon, ..., 6=Sat
+const dayOrder = ['ne', 'po', 'ut', 'st', 'ct', 'pa', 'so'];
+const todayId = dayOrder[new Date().getDay()];
+
+// Categories considered "main meals" vs "snacks" for the filter chips
+const MAIN_CATEGORIES = ['breakfast', 'lunch', 'dinner'];
+const SNACK_CATEGORIES = ['snackAm', 'snackPm', 'preworkout', 'postworkout', 'bedtime'];
+let currentMealFilter = 'all';
+
+// ===========================================================
+// RENDER: TODAY TIMELINE
+// ===========================================================
+function renderTimeline(dayType) {
+  const data = timelines[dayType];
+  const list = document.getElementById('mealList');
+
+  // Apply filter
+  let items = data.items;
+  if (currentMealFilter === 'main') {
+    items = items.filter(it => it.isWorkout || MAIN_CATEGORIES.includes(it.category));
+  } else if (currentMealFilter === 'snacks') {
+    items = items.filter(it => SNACK_CATEGORIES.includes(it.category));
+  }
+
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div style="padding: 32px 16px; text-align: center; color: var(--ink-3); font-size: 12.5px;">
+        Žádné jídlo neodpovídá filtru.
+      </div>
+    `;
+    list.dataset.filterEmpty = 'true';
+  } else {
+    list.dataset.filterEmpty = 'false';
+    list.innerHTML = items.map(item => {
+      if (item.isWorkout) {
+        return `
+          <div class="meal-row workout">
+            <div class="meal-row-time num">${item.time}</div>
+            <div><span class="workout-pill">trénink</span></div>
+            <div>
+              <div class="meal-row-name">${item.name}</div>
+              <div class="meal-row-desc">${item.desc}</div>
+            </div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        `;
+      }
+      return `
+        <div class="meal-row clickable" data-category="${item.category || ''}" data-slot-name="${item.name}">
+          <div class="meal-row-time num">${item.time}</div>
+          <div></div>
+          <div>
+            <div class="meal-row-name">${item.name}${item.isMain ? '<span class="main-pill">hlavní</span>' : ''}</div>
+            <div class="meal-row-desc">${item.desc}</div>
+          </div>
+          <div class="meal-row-macros">
+            <span style="color:var(--protein);">P ${item.p}</span>
+            <span style="color:var(--carbs);">C ${item.c}</span>
+            <span style="color:var(--fat);">F ${item.f}</span>
+          </div>
+          <div class="meal-row-macros"><span class="kcal">${item.kcal} kcal</span></div>
+          <svg class="meal-row-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Attach click handlers
+  list.querySelectorAll('.meal-row.clickable').forEach(row => {
+    row.addEventListener('click', () => {
+      const cat = row.dataset.category;
+      if (cat && meals[cat]) {
+        openMealSlotModal(cat, row.dataset.slotName);
+      }
+    });
+  });
+
+  const target = data.target;
+  document.getElementById('pVal').textContent = target.p;
+  document.getElementById('cVal').textContent = target.c;
+  document.getElementById('fVal').textContent = target.f;
+  document.getElementById('dayTargetKcal').textContent = fmt(target.kcal);
+
+  const tdee = 2700;
+  const diff = target.kcal - tdee;
+  const diffEl = document.getElementById('dayDeficit');
+  diffEl.innerHTML = (diff < 0 ? '−' : '+') + fmt(Math.abs(diff)) + ' kcal ' + (diff < 0 ? 'pod TDEE' : 'nad TDEE');
+
+  renderMacroRing(target, document.getElementById('macroRingWrap'));
+}
+
+// ===========================================================
+// SELECT DAY (drives renderTimeline + title)
+// ===========================================================
+function selectDay(dayId) {
+  const info = dayMap[dayId];
+  document.querySelectorAll('#dayChips .day-chip').forEach(c => {
+    c.classList.remove('active');
+    c.classList.toggle('today', c.dataset.day === todayId);
+  });
+  const chip = document.querySelector(`#dayChips .day-chip[data-day="${dayId}"]`);
+  if (chip) chip.classList.add('active');
+
+  document.getElementById('todayTitle').innerHTML = `${info.full}<span class="day-type-suffix">· ${info.type === 'training' ? 'Tréninkový' : 'Netréninkový'} den</span>`;
+
+  renderTimeline(info.type);
+}
+
+// ===========================================================
+// RENDER: WEEK MINI BARS
+// ===========================================================
+function renderWeekBars() {
+  const days = [
+    { day: 'Po', kcal: 2750 },
+    { day: 'Út', kcal: 3050, training: true },
+    { day: 'St', kcal: 2750 },
+    { day: 'Čt', kcal: 3050, training: true },
+    { day: 'Pá', kcal: 2750 },
+    { day: 'So', kcal: 2750 },
+    { day: 'Ne', kcal: 3050, training: true }
+  ];
+  const max = 3200;
+  document.getElementById('weekMiniBars').innerHTML = days.map(d => `
+    <div style="display:grid; grid-template-columns:14px 1fr 50px; gap:8px; align-items:center; font-size:11px;">
+      <div class="num" style="color:${d.training ? 'var(--ink)' : 'var(--ink-3)'}; font-weight:${d.training ? 600 : 400};">${d.day}</div>
+      <div class="bar" style="height:6px;">
+        <div class="bar-fill" style="width:${(d.kcal / max) * 100}%; background:${d.training ? 'var(--green)' : 'var(--green-line)'};"></div>
+      </div>
+      <div class="num" style="color:var(--ink-3); text-align:right;">${fmt(d.kcal)}</div>
+    </div>
+  `).join('');
+}
+
+// ===========================================================
+// RENDER: RECIPES GRID
+// ===========================================================
+const allRecipes = [
+  ...meals.breakfast.map(m => ({ ...m, category: 'snídaně', cat: 'breakfast' })),
+  ...meals.snackAm.map(m => ({ ...m, category: 'dop. svačina', cat: 'snackAm' })),
+  ...meals.lunch.map(m => ({ ...m, category: 'oběd', cat: 'lunch' })),
+  ...meals.snackPm.map(m => ({ ...m, category: 'odp. svačina', cat: 'snackPm' })),
+  ...meals.preworkout.map(m => ({ ...m, category: 'pre-workout', cat: 'preworkout' })),
+  ...meals.postworkout.map(m => ({ ...m, category: 'post-workout', cat: 'postworkout' })),
+  ...meals.dinner.map(m => ({ ...m, category: 'večeře', cat: 'dinner' })),
+  ...meals.bedtime.map(m => ({ ...m, category: 'před spaním', cat: 'bedtime' }))
+];
+
+const recipeFilters = [
+  { id: 'all', label: 'Vše' },
+  { id: 'breakfast', label: 'Snídaně' },
+  { id: 'lunch', label: 'Oběd' },
+  { id: 'dinner', label: 'Večeře' },
+  { id: 'snack', label: 'Svačiny' },
+  { id: 'workout', label: 'Pre/Post WO' }
+];
+
+function renderRecipeFilters(activeId) {
+  const c = document.getElementById('recipeFilters');
+  c.innerHTML = recipeFilters.map(f => `
+    <button class="chip ${f.id === activeId ? 'active' : ''}" data-filter="${f.id}">${f.label}</button>
+  `).join('') + `
+    <div class="filter-divider"></div>
+    <button class="chip"><span class="chip-dot" style="background:var(--protein)"></span>Vysoký protein</button>
+    <button class="chip">Rychlé (&lt;5 min)</button>
+    <button class="chip">Meal prep</button>
+  `;
+}
+
+function renderRecipes(filterId) {
+  let items = allRecipes;
+  if (filterId === 'breakfast') items = items.filter(r => r.cat === 'breakfast');
+  else if (filterId === 'lunch') items = items.filter(r => r.cat === 'lunch');
+  else if (filterId === 'dinner') items = items.filter(r => r.cat === 'dinner');
+  else if (filterId === 'snack') items = items.filter(r => r.cat === 'snackAm' || r.cat === 'snackPm' || r.cat === 'bedtime');
+  else if (filterId === 'workout') items = items.filter(r => r.cat === 'preworkout' || r.cat === 'postworkout');
+
+  document.getElementById('recipeCount').textContent = allRecipes.length;
+  
+  const grid = document.getElementById('recipesGrid');
+  grid.innerHTML = items.map(r => {
+    const ts = thumbStyle(r.color);
+    return `
+      <div class="recipe-card" data-cat="${r.cat}" data-n="${r.n}">
+        <div class="recipe-thumb" style="background:${ts.background};">
+          <span class="recipe-thumb-label" style="color:${ts.labelColor};">${r.tag}</span>
+        </div>
+        <div class="recipe-body">
+          <div>
+            <div class="recipe-title">${r.name}</div>
+            <div class="recipe-meta">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              ${r.time}
+              <span>·</span>
+              <span>${r.category}</span>
+            </div>
+          </div>
+          <div class="recipe-stats">
+            <div class="recipe-kcal-block">
+              <div class="recipe-kcal-label">per porce</div>
+              <div class="recipe-kcal-value">${r.kcal}<span class="recipe-kcal-unit">kcal</span></div>
+            </div>
+            <div class="recipe-macros">
+              <span style="color:var(--protein);">P${r.p}</span>
+              <span style="color:var(--carbs);">C${r.c}</span>
+              <span style="color:var(--fat);">F${r.f}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const cat = card.dataset.cat;
+      const n = parseInt(card.dataset.n);
+      const recipe = meals[cat].find(m => m.n === n);
+      openRecipeModal(recipe);
+    });
+  });
+}
+
+// ===========================================================
+// MEAL SLOT MODAL — shows multiple recipe options for one timeslot
+// ===========================================================
+function openMealSlotModal(category, slotName) {
+  const recipes = meals[category];
+  if (!recipes || recipes.length === 0) return;
+
+  let activeIdx = 0;
+  const modalContent = document.getElementById('modalContent');
+
+  const render = () => {
+    const r = recipes[activeIdx];
+    modalContent.innerHTML = `
+      <div class="modal-topbar">
+        <div>
+          <div class="breadcrumb">
+            <span>Plán dne</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+            <span>${slotName}</span>
+          </div>
+          <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.02em; margin-top:4px;">${slotName}</h1>
+          <div class="topbar-subtitle">${recipes.length} ${recipes.length === 1 ? 'možnost' : (recipes.length < 5 ? 'možnosti' : 'možností')} · vyber, co máš dnes chuť</div>
+        </div>
+        <button class="modal-close" id="modalClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      ${recipes.length > 1 ? `
+        <div style="padding: 12px 22px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap;">
+          ${recipes.map((rec, i) => `
+            <button class="chip ${i === activeIdx ? 'active' : ''}" data-idx="${i}">${rec.name}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+      <div class="modal-meta-row">
+        <div class="key-val">
+          <div class="key-val-k">Kalorie</div>
+          <div class="key-val-v">${r.kcal}</div>
+          <div class="key-val-sub">kcal/porce</div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Protein</div>
+          <div class="key-val-v" style="color:var(--protein);">${r.p}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Sacharidy</div>
+          <div class="key-val-v" style="color:var(--carbs);">${r.c}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+        </div>
+        <div class="key-val">
+          <div class="key-val-k">Tuk</div>
+          <div class="key-val-v" style="color:var(--fat);">${r.f}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+          <div class="modal-section-title" style="margin-bottom:0;">Suroviny</div>
+          <div style="font-size:11px; color:var(--ink-3); font-family:var(--font-mono); font-feature-settings:'tnum';">⏱ ${r.time}</div>
+        </div>
+        <ul class="modal-ingredients">
+          ${r.ingredients.map(i => `<li><span class="modal-ing-bullet"></span><span>${i}</span></li>`).join('')}
+        </ul>
+        ${r.note ? `<div class="modal-note"><strong>Tip:</strong> ${r.note}</div>` : ''}
+      </div>
+    `;
+
+    // Recipe-switcher chip handlers
+    modalContent.querySelectorAll('button.chip[data-idx]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        activeIdx = parseInt(btn.dataset.idx);
+        render();
+      });
+    });
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+  };
+
+  render();
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// ===========================================================
+// RECIPE MODAL (single recipe — for Recipes grid)
+// ===========================================================
+function openRecipeModal(r) {
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = `
+    <div class="modal-topbar">
+      <div>
+        <div class="breadcrumb">
+          <span>Recepty</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span style="text-transform:capitalize;">${r.tag}</span>
+        </div>
+        <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.02em; margin-top:4px;">${r.name}</h1>
+        <div class="topbar-subtitle">low-FODMAP · gut-friendly · ${r.time}</div>
+      </div>
+      <button class="modal-close" id="modalClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-meta-row">
+      <div class="key-val">
+        <div class="key-val-k">Kalorie</div>
+        <div class="key-val-v">${r.kcal}</div>
+        <div class="key-val-sub">kcal/porce</div>
+      </div>
+      <div class="key-val">
+        <div class="key-val-k">Protein</div>
+        <div class="key-val-v" style="color:var(--protein);">${r.p}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+      </div>
+      <div class="key-val">
+        <div class="key-val-k">Sacharidy</div>
+        <div class="key-val-v" style="color:var(--carbs);">${r.c}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+      </div>
+      <div class="key-val">
+        <div class="key-val-k">Tuk</div>
+        <div class="key-val-v" style="color:var(--fat);">${r.f}<span style="font-size:11px; color:var(--ink-3); font-family:var(--font-sans); font-weight:400; margin-left:2px;">g</span></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-title">Suroviny</div>
+      <ul class="modal-ingredients">
+        ${r.ingredients.map(i => `<li><span class="modal-ing-bullet"></span><span>${i}</span></li>`).join('')}
+      </ul>
+      ${r.note ? `<div class="modal-note"><strong>Tip:</strong> ${r.note}</div>` : ''}
+    </div>
+  `;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===========================================================
+// PREP CHECKLIST
+// ===========================================================
+function renderPrepChecklist() {
+  const state = loadStore('prepState_v3');
+  const c = document.getElementById('prepChecklist');
+  c.innerHTML = prepItems.map((item, i) => `
+    <div class="check-row prep-row ${state[i] ? 'checked' : ''}" data-idx="${i}">
+      <div class="check-box" data-action="toggle"></div>
+      <div class="check-text" data-action="detail">
+        <strong>${item.title}</strong>
+        <small>${item.desc}</small>
+      </div>
+      <button class="prep-detail-btn" data-action="detail" title="Zobrazit recept">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  const updateProgress = () => {
+    const done = Object.values(state).filter(Boolean).length;
+    document.getElementById('prepProgress').textContent = `${done} / ${prepItems.length} hotovo`;
+  };
+  updateProgress();
+
+  c.addEventListener('click', e => {
+    const row = e.target.closest('.check-row');
+    if (!row) return;
+    const i = parseInt(row.dataset.idx);
+    const action = e.target.closest('[data-action]')?.dataset.action;
+
+    if (action === 'detail') {
+      openPrepDetailModal(prepItems[i]);
+    } else {
+      // Default = toggle checkbox (clicking on the row but not on detail btn)
+      row.classList.toggle('checked');
+      state[i] = row.classList.contains('checked');
+      saveStore('prepState_v3', state);
+      updateProgress();
+    }
+  });
+}
+
+// ===========================================================
+// PREP DETAIL MODAL
+// ===========================================================
+function openPrepDetailModal(item) {
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = `
+    <div class="modal-topbar">
+      <div>
+        <div class="breadcrumb">
+          <span>Příprava</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          <span>Recept</span>
+        </div>
+        <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.02em; margin-top:4px;">${item.title}</h1>
+        <div class="topbar-subtitle">${item.desc}</div>
+      </div>
+      <button class="modal-close" id="modalClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-meta-row" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="key-val">
+        <div class="key-val-k">Celkem</div>
+        <div class="key-val-v">${item.time}</div>
+        <div class="key-val-sub">${item.activeTime} aktivně</div>
+      </div>
+      <div class="key-val">
+        <div class="key-val-k">Skladování</div>
+        <div class="key-val-v" style="font-size:13px; line-height:1.3;">${item.storage}</div>
+      </div>
+      <div class="key-val">
+        <div class="key-val-k">Krok</div>
+        <div class="key-val-v">${item.steps.length}</div>
+        <div class="key-val-sub">${item.steps.length === 1 ? 'krok' : (item.steps.length < 5 ? 'kroky' : 'kroků')}</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-title">Suroviny</div>
+      <ul class="modal-ingredients" style="margin-bottom: 18px;">
+        ${item.ingredients.map(ing => `<li><span class="modal-ing-bullet"></span><span>${ing}</span></li>`).join('')}
+      </ul>
+
+      <div class="modal-section-title">Postup</div>
+      <ol class="prep-steps">
+        ${item.steps.map((step, i) => `
+          <li>
+            <span class="prep-step-num">${i + 1}</span>
+            <span class="prep-step-text">${step}</span>
+          </li>
+        `).join('')}
+      </ol>
+
+      ${item.tip ? `<div class="modal-note"><strong>Tip:</strong> ${item.tip}</div>` : ''}
+    </div>
+  `;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+}
+
+// ===========================================================
+// SHOPPING
+// ===========================================================
+function renderShopping() {
+  const state = loadStore('shopState_v3');
+  const grid = document.getElementById('shopGrid');
+  grid.innerHTML = Object.entries(shoppingData).map(([cat, items]) => {
+    const checkedCount = items.filter((_, i) => state[`${cat}-${i}`]).length;
+    return `
+      <div class="shop-section">
+        <div class="shop-section-header">
+          <span>${cat}</span>
+          <span class="shop-section-count">${checkedCount}/${items.length}</span>
+        </div>
+        <ul class="shop-list">
+          ${items.map((item, i) => {
+            const key = `${cat}-${i}`;
+            return `<li class="${state[key] ? 'checked' : ''}" data-key="${key}">
+              <div class="shop-checkbox"></div>${item}
+            </li>`;
+          }).join('')}
+        </ul>
+      </div>
+    `;
+  }).join('');
+
+  grid.addEventListener('click', e => {
+    const li = e.target.closest('.shop-list li');
+    if (!li) return;
+    const key = li.dataset.key;
+    li.classList.toggle('checked');
+    state[key] = li.classList.contains('checked');
+    saveStore('shopState_v3', state);
+    const section = li.closest('.shop-section');
+    const total = section.querySelectorAll('.shop-list li').length;
+    const checked = section.querySelectorAll('.shop-list li.checked').length;
+    section.querySelector('.shop-section-count').textContent = `${checked}/${total}`;
+  });
+
+  document.getElementById('resetShop').addEventListener('click', () => {
+    saveStore('shopState_v3', {});
+    renderShopping();
+  });
+}
+
+// ===========================================================
+// RESCUE GRID
+// ===========================================================
+function renderRescue() {
+  const grid = document.getElementById('rescueGrid');
+  grid.innerHTML = meals.rescue.map(r => {
+    const ts = thumbStyle(r.color);
+    return `
+      <div class="recipe-card" data-cat="rescue" data-n="${r.n}">
+        <div class="recipe-thumb" style="background:${ts.background};">
+          <span class="recipe-thumb-label" style="color:${ts.labelColor};">${r.tag}</span>
+        </div>
+        <div class="recipe-body">
+          <div>
+            <div class="recipe-title">${r.name}</div>
+            <div class="recipe-meta">${r.time}</div>
+          </div>
+          <div class="recipe-stats">
+            <div class="recipe-kcal-block">
+              <div class="recipe-kcal-label">per porce</div>
+              <div class="recipe-kcal-value">${r.kcal}<span class="recipe-kcal-unit">kcal</span></div>
+            </div>
+            <div class="recipe-macros">
+              <span style="color:var(--protein);">P${r.p}</span>
+              <span style="color:var(--carbs);">C${r.c}</span>
+              <span style="color:var(--fat);">F${r.f}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const n = parseInt(card.dataset.n);
+      openRecipeModal(meals.rescue.find(m => m.n === n));
+    });
+  });
+}
+
+// ===========================================================
+// NAVIGATION
+// ===========================================================
+function setActiveSection(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+
+  document.querySelectorAll('.nav-item, .nav-collection').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll(`[data-target="${id}"]`).forEach(n => n.classList.add('active'));
+
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+
+  document.querySelectorAll('.page-content').forEach(c => c.scrollTop = 0);
+}
+
+document.querySelectorAll('.nav-item, .nav-collection').forEach(btn => {
+  btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
+});
+
+// ===========================================================
+// DAY CHIPS
+// ===========================================================
+document.querySelectorAll('#dayChips .day-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectDay(btn.dataset.day);
+  });
+});
+
+// ===========================================================
+// MEAL FILTER CHIPS (Vše / Hlavní jídla / Svačiny)
+// ===========================================================
+document.getElementById('mealFilterChips').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-meal-filter]');
+  if (!btn) return;
+  document.querySelectorAll('#mealFilterChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentMealFilter = btn.dataset.mealFilter;
+  // Re-render with the currently selected day type
+  const activeDay = document.querySelector('#dayChips .day-chip.active');
+  const dayId = activeDay ? activeDay.dataset.day : todayId;
+  renderTimeline(dayMap[dayId].type);
+});
+
+// ===========================================================
+// RECIPE FILTERS
+// ===========================================================
+document.getElementById('recipeFilters').addEventListener('click', e => {
+  const btn = e.target.closest('button.chip[data-filter]');
+  if (!btn) return;
+  document.querySelectorAll('#recipeFilters .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecipes(btn.dataset.filter);
+});
+
+// ===========================================================
+// MOBILE
+// ===========================================================
+document.querySelectorAll('[data-mobile-toggle]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('mobileOverlay').classList.toggle('open');
+  });
+});
+
+document.getElementById('mobileOverlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+});
+
+// ===========================================================
+// INIT
+// ===========================================================
+selectDay(todayId);
+renderWeekBars();
+renderRecipeFilters('all');
+renderRecipes('all');
+renderPrepChecklist();
+renderShopping();
+renderRescue();
+</script>
+
+</body>
+</html>
