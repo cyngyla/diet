@@ -5,14 +5,14 @@
     </clipPath>
   </defs>
   <g clip-path="url(#mask)">
-    <rect width="1024" height="1024" fill="#3a8d4f"></rect>
+    <rect width="1024" height="1024" fill="#10b981"></rect>
     
-    <circle cx="512" cy="512" r="368" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="72"></circle>
-    <circle cx="512" cy="512" r="368" fill="none" stroke="#ffffff" stroke-width="72" stroke-dasharray="1710 2312" stroke-linecap="round" transform="rotate(-90 512 512)"></circle>
+    <circle cx="512" cy="512" r="368" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="110"></circle>
+    <circle cx="512" cy="512" r="368" fill="none" stroke="#ffffff" stroke-width="110" stroke-dasharray="1710 2312" stroke-linecap="round" transform="rotate(-90 512 512)"></circle>
     
-    <circle cx="512" cy="512" r="240" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="56"></circle>
-    <circle cx="512" cy="512" r="240" fill="none" stroke="#ffffff" stroke-width="56" stroke-dasharray="1030 1509" stroke-linecap="round" transform="rotate(-90 512 512)"></circle>
+    <circle cx="512" cy="512" r="240" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="92"></circle>
+    <circle cx="512" cy="512" r="240" fill="none" stroke="#ffffff" stroke-width="92" stroke-dasharray="1030 1509" stroke-linecap="round" transform="rotate(-90 512 512)"></circle>
     
-    <circle cx="512" cy="512" r="34" fill="#ffffff"></circle>
+    <circle cx="512" cy="512" r="50" fill="#ffffff"></circle>
   </g>
 </svg>
